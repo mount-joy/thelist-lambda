@@ -3,9 +3,10 @@ package main
 import (
 	"encoding/json"
 
+	"github.com/mount-joy/thelist-lambda/handlers"
+
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
-	"src/handlers"
 )
 
 func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {

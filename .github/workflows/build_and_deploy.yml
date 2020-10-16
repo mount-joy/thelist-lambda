@@ -29,8 +29,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Get dependencies
-        run: |
-          go get -v -t -d ./src/...
+        run: go get -v -t -d ./src/...
 
       - name: Build
         run: GOARCH=amd64 GOOS=linux go build -o main ./src
