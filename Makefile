@@ -14,3 +14,6 @@ build-lambda.zip:
 
 lambda.zip: build-lambda.zip
 	zip lambda.zip main
+
+deps:
+	go get -v -t -d
