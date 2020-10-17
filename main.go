@@ -9,14 +9,23 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 )
 
-func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	result, statusCode := handlers.Router(request)
-	res, err := json.Marshal(result)
+type handler struct {
+	router handlers.Router
+}
 
-	if err != nil {
-		return events.APIGatewayProxyResponse{
-			StatusCode: 500,
-		}, nil
+func (h *handler) doRequest(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	result, statusCode := h.router.Route(request)
+
+	var res []byte
+	if result != nil {
+		var err error
+		res, err = json.Marshal(result)
+		if err != nil {
+			return events.APIGatewayProxyResponse{
+				Body:       err.Error(),
+				StatusCode: 500,
+			}, nil
+		}
 	}
 
 	return events.APIGatewayProxyResponse{
@@ -26,5 +35,9 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 }
 
 func main() {
-	lambda.Start(handler)
+	h := handler{
+		router: handlers.NewRouter(),
+	}
+
+	lambda.Start(h.doRequest)
 }
