@@ -1,0 +1,103 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: AWS API Gateway with a custom domain name
+
+Parameters:
+  LambdaStackName:
+    Type: String
+    Description: Name of the lambda role CF stack
+
+  CustomDomainName:
+    Type: String
+    Description: Domain name of the API
+
+  ACMCertArn:
+    Type: String
+    Description: Certificate Arn for the cutsom domain name
+
+Resources:
+  HttpApi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name:
+        Fn::ImportValue: !Sub "${LambdaStackName}:LambdaName"
+      ProtocolType: HTTP
+
+  Integration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref HttpApi
+      Description: Lambda Integration
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !Sub
+        - arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${Arn}/invocations
+        - Arn:
+            Fn::ImportValue: !Sub "${LambdaStackName}:LambdaArn"
+      IntegrationMethod: POST
+      ConnectionType: INTERNET
+      PayloadFormatVersion: "2.0"
+
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join
+        - /
+        - - /aws/api
+          - Fn::ImportValue: !Sub "${LambdaStackName}:LambdaName"
+      RetentionInDays: 3
+
+  DefaultRoute:
+    Type: AWS::ApiGatewayV2::Route
+    DependsOn:
+      - Integration
+    Properties:
+      ApiId: !Ref HttpApi
+      RouteKey: $default
+      AuthorizationType: NONE
+      Target: !Join
+        - /
+        - - integrations
+          - !Ref Integration
+
+  Stage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      StageName: $default
+      ApiId: !Ref HttpApi
+      AutoDeploy: true
+      AccessLogSettings:
+        DestinationArn: !GetAtt LogGroup.Arn
+        Format: >-
+          {"requestId":"$context.requestId", "ip": "$context.identity.sourceIp",
+          "requestTime":"$context.requestTime","routeKey":"$context.routeKey",
+          "status":"$context.status","integrationErrorMessage":"$context.integrationErrorMessage"}
+
+  Permission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName:
+        Fn::ImportValue: !Sub "${LambdaStackName}:LambdaArn"
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub
+        - arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${HttpApi}/*
+        - HttpApi: !Ref HttpApi
+
+  DomainName:
+    Type: AWS::ApiGatewayV2::DomainName
+    Properties:
+      DomainName: !Ref CustomDomainName
+      DomainNameConfigurations:
+        - CertificateArn: !Ref ACMCertArn
+
+  ApiMapping:
+    Type: AWS::ApiGatewayV2::ApiMapping
+    Properties:
+      ApiId: !Ref HttpApi
+      DomainName: !Ref DomainName
+      Stage: !Ref Stage
+
+Outputs:
+  RegionalDomainName:
+    Value: !GetAtt DomainName.RegionalDomainName
+    Export:
+      Name: !Sub "${AWS::StackName}:RegionalDomainName"

@@ -1,0 +1,55 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: IAM role for the lambda
+
+Parameters:
+  LambdaName:
+    Type: String
+    Description: Name of the lambda role to create
+
+Resources:
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ['/', ['/aws/lambda', !Ref LambdaName]]
+      RetentionInDays: 7
+
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyName: CloudwatchLogs
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !GetAtt LogGroup.Arn
+
+Outputs:
+  RoleArn:
+    Value: !GetAtt LambdaRole.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}:RoleArn"
+  LambdaName:
+    Value: !Ref LambdaName
+    Export:
+      Name: !Sub "${AWS::StackName}:LambdaName"
+  LambdaArn:
+    Value: !Sub
+      - arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${LambdaName}
+      - LambdaName: !Ref LambdaName
+    Export:
+      Name: !Sub "${AWS::StackName}:LambdaArn"
