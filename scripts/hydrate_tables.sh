@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Creates 5 lists and randomly adds up to 10 items to each one
 
-ITEMS=("Apples" "Pears" "Oranges" "Limes" "Leamons" "Butter" "Salt" "Cereal" "Bread" "Milk" "Cheese")
+ITEMS=("Apples" "Pears" "Oranges" "Limes" "Lemons" "Butter" "Salt" "Cereal" "Bread" "Milk" "Cheese")
 
 for list in {1..5}; do
   ID=$(uuidgen | cut -c1-8)
