@@ -9,7 +9,6 @@ import (
 
 type helloWorld struct{}
 
-// NewRouter return the default implementation of the hello world route handler
 func newHelloWorld() RouteHandler {
 	return &helloWorld{}
 }
