@@ -47,45 +47,45 @@ func (mr *mockRouter) Route(request events.APIGatewayProxyRequest) (interface{},
 }
 
 func TestHandler(t *testing.T) {
-	t.Run("Successful Request", func(t *testing.T) {
-		type mockRoute struct {
-			body   interface{}
-			status int
-		}
-		tests := []struct {
-			name           string
-			request        events.APIGatewayProxyRequest
-			mockRoute      mockRoute
-			expectedBody   string
-			expectedStatus int
-			expectedErr    error
-		}{
-			{
-				name: "Router doesn't error",
-				request: events.APIGatewayProxyRequest{
-					Path: "/test",
-				},
-				mockRoute: mockRoute{
-					body:   map[string]string{"message": fmt.Sprintf("huge success")},
-					status: 200,
-				},
-				expectedBody:   "{\"message\":\"huge success\"}",
-				expectedStatus: 200,
+	type mockRoute struct {
+		body   interface{}
+		status int
+	}
+	tests := []struct {
+		name           string
+		request        events.APIGatewayProxyRequest
+		mockRoute      mockRoute
+		expectedBody   string
+		expectedStatus int
+		expectedErr    error
+	}{
+		{
+			name: "Router doesn't error",
+			request: events.APIGatewayProxyRequest{
+				Path: "/test",
 			},
-			{
-				name: "Route returns nil",
-				request: events.APIGatewayProxyRequest{
-					Path: "/test",
-				},
-				mockRoute: mockRoute{
-					body:   nil,
-					status: 203,
-				},
-				expectedStatus: 203,
-				expectedBody:   "",
+			mockRoute: mockRoute{
+				body:   map[string]string{"message": fmt.Sprintf("huge success")},
+				status: 200,
 			},
-		}
-		for _, tt := range tests {
+			expectedBody:   "{\"message\":\"huge success\"}",
+			expectedStatus: 200,
+		},
+		{
+			name: "Route returns nil",
+			request: events.APIGatewayProxyRequest{
+				Path: "/test",
+			},
+			mockRoute: mockRoute{
+				body:   nil,
+				status: 203,
+			},
+			expectedStatus: 203,
+			expectedBody:   "null",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
 			router := &mockRouter{}
 			router.Test(t)
 			defer router.AssertExpectations(t)
@@ -103,6 +103,6 @@ func TestHandler(t *testing.T) {
 			assert.Equal(t, tt.expectedErr, gotErr)
 			assert.Equal(t, tt.expectedBody, gotRes.Body)
 			assert.Equal(t, tt.expectedStatus, gotRes.StatusCode)
-		}
-	})
+		})
+	}
 }
