@@ -1,13 +1,15 @@
 package db
 
 import (
+	"errors"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/mount-joy/thelist-lambda/data"
 )
 
-func (d *db) GetItemsOnList(listID *string) (*[]data.Item, error) {
+func (d *dynamoDB) GetItemsOnList(listID *string) (*[]data.Item, error) {
 	input := &dynamodb.QueryInput{
 		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
 			":id": {S: listID},
@@ -21,11 +23,10 @@ func (d *db) GetItemsOnList(listID *string) (*[]data.Item, error) {
 		return nil, err
 	}
 	if result.Items == nil {
-		return nil, nil
+		return nil, errors.New("Failed to fetch items")
 	}
 
 	items := []data.Item{}
-
 	for _, i := range result.Items {
 		item := new(data.Item)
 		err = dynamodbattribute.UnmarshalMap(i, &item)

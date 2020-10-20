@@ -68,7 +68,7 @@ func TestGetItemsOnList(t *testing.T) {
 		},
 		{
 			name:        "When Query returns an error, that error is returned",
-			output:      nil,
+			output:      &dynamodb.QueryOutput{},
 			outputErr:   errors.New("Something went wrong"),
 			expectedRes: nil,
 			expectedErr: errors.New("Something went wrong"),
@@ -93,7 +93,7 @@ func TestGetItemsOnList(t *testing.T) {
 				Return(tt.output, tt.outputErr).
 				Once()
 
-			d := db{session: dbMocked}
+			d := dynamoDB{session: dbMocked}
 
 			gotRes, gotErr := d.GetItemsOnList(&listID)
 
