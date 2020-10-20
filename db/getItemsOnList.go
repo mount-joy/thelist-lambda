@@ -22,7 +22,7 @@ func (d *dynamoDB) GetItemsOnList(listID *string) (*[]data.Item, error) {
 	if err != nil {
 		return nil, err
 	}
-	if result.Items == nil {
+	if result == nil || result.Items == nil {
 		return nil, errors.New("Failed to fetch items")
 	}
 

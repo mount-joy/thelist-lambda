@@ -73,6 +73,13 @@ func TestGetItemsOnList(t *testing.T) {
 			expectedRes: nil,
 			expectedErr: errors.New("Something went wrong"),
 		},
+		{
+			name:        "When Query returns an nil, that nil is returned",
+			output:      nil,
+			outputErr:   nil,
+			expectedRes: nil,
+			expectedErr: errors.New("Failed to fetch items"),
+		},
 	}
 
 	for _, tt := range tests {
