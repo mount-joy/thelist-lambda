@@ -18,7 +18,7 @@ type getItems struct {
 
 func newGetItems() RouteHandler {
 	return &getItems{
-		db: db.NewDynamoDB(),
+		db: db.DynamoDB(),
 	}
 }
 

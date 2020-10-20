@@ -81,14 +81,13 @@ func TestGetItemsOnList(t *testing.T) {
 			expectedErr: errors.New("Failed to fetch items"),
 		},
 	}
+	listID := "474c2Fff7"
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			dbMocked := &mockDB{}
 			dbMocked.Test(t)
 			defer dbMocked.AssertExpectations(t)
-
-			listID := "474c2Fff7"
 
 			input := dynamodb.QueryInput{
 				ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{":id": {S: &listID}},
