@@ -17,20 +17,21 @@ type RouteHandler interface {
 	handle(events.APIGatewayProxyRequest) (interface{}, int)
 }
 
-type router struct{}
+type router struct {
+	routes []RouteHandler
+}
 
 // NewRouter return the default implementation of Router
 func NewRouter() Router {
-	return &router{}
+	routes := []RouteHandler{
+		newHelloWorld(),
+	}
+	return &router{routes: routes}
 }
 
 // Route call the appropriate handler for a request based on its path
 func (r *router) Route(request events.APIGatewayProxyRequest) (interface{}, int) {
-	routes := []RouteHandler{
-		newHelloWorld(),
-	}
-
-	for _, route := range routes {
+	for _, route := range r.routes {
 		if route.match(request) {
 			return route.handle(request)
 		}
