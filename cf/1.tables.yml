@@ -5,7 +5,6 @@ Resources:
   ListsTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: !Sub "${AWS::StackName}-lists"
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
         - AttributeName: "Id"
@@ -17,7 +16,6 @@ Resources:
   ItemsTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: !Sub "${AWS::StackName}-items"
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
         - AttributeName: "ListId"
@@ -35,7 +33,15 @@ Outputs:
     Value: !GetAtt ListsTable.Arn
     Export:
       Name: !Sub "${AWS::StackName}:ListsTableArn"
+  ListsTableName:
+    Value: !Ref ListsTable
+    Export:
+      Name: !Sub "${AWS::StackName}:ListsTableName"
   ItemsTableArn:
     Value: !GetAtt ItemsTable.Arn
     Export:
       Name: !Sub "${AWS::StackName}:ItemsTableArn"
+  ItemsTableName:
+    Value: !Ref ItemsTable
+    Export:
+      Name: !Sub "${AWS::StackName}:ItemsTableName"
