@@ -9,12 +9,14 @@ Parameters:
 Resources:
   LogGroup:
     Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
     Properties:
       LogGroupName: !Join ['/', ['/aws/lambda', !Ref LambdaName]]
       RetentionInDays: 7
 
   LambdaRole:
     Type: AWS::IAM::Role
+    DeletionPolicy: Delete
     Properties:
       AssumeRolePolicyDocument:
         Version: '2012-10-17'

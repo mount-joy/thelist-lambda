@@ -2,28 +2,26 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: AWS API Gateway with a custom domain name
 
 Parameters:
-  LambdaStackName:
+  RoleStackName:
     Type: String
     Description: Name of the lambda role CF stack
 
-  CustomDomainName:
+  CertStackName:
     Type: String
-    Description: Domain name of the API
-
-  ACMCertArn:
-    Type: String
-    Description: Certificate Arn for the cutsom domain name
+    Description: Name of the certificate CF stack
 
 Resources:
   HttpApi:
     Type: AWS::ApiGatewayV2::Api
+    DeletionPolicy: Delete
     Properties:
       Name:
-        Fn::ImportValue: !Sub "${LambdaStackName}:LambdaName"
+        Fn::ImportValue: !Sub "${RoleStackName}:LambdaName"
       ProtocolType: HTTP
 
   Integration:
     Type: AWS::ApiGatewayV2::Integration
+    DeletionPolicy: Delete
     Properties:
       ApiId: !Ref HttpApi
       Description: Lambda Integration
@@ -31,22 +29,24 @@ Resources:
       IntegrationUri: !Sub
         - arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${Arn}/invocations
         - Arn:
-            Fn::ImportValue: !Sub "${LambdaStackName}:LambdaArn"
+            Fn::ImportValue: !Sub "${RoleStackName}:LambdaArn"
       IntegrationMethod: POST
       ConnectionType: INTERNET
       PayloadFormatVersion: "2.0"
 
   LogGroup:
     Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
     Properties:
       LogGroupName: !Join
         - /
         - - /aws/api
-          - Fn::ImportValue: !Sub "${LambdaStackName}:LambdaName"
+          - Fn::ImportValue: !Sub "${RoleStackName}:LambdaName"
       RetentionInDays: 3
 
   DefaultRoute:
     Type: AWS::ApiGatewayV2::Route
+    DeletionPolicy: Delete
     DependsOn:
       - Integration
     Properties:
@@ -60,6 +60,7 @@ Resources:
 
   Stage:
     Type: AWS::ApiGatewayV2::Stage
+    DeletionPolicy: Delete
     Properties:
       StageName: $default
       ApiId: !Ref HttpApi
@@ -73,9 +74,10 @@ Resources:
 
   Permission:
     Type: AWS::Lambda::Permission
+    DeletionPolicy: Delete
     Properties:
       FunctionName:
-        Fn::ImportValue: !Sub "${LambdaStackName}:LambdaArn"
+        Fn::ImportValue: !Sub "${RoleStackName}:LambdaArn"
       Action: lambda:InvokeFunction
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub
@@ -84,13 +86,17 @@ Resources:
 
   DomainName:
     Type: AWS::ApiGatewayV2::DomainName
+    DeletionPolicy: Delete
     Properties:
-      DomainName: !Ref CustomDomainName
+      DomainName:
+        Fn::ImportValue: !Sub "${CertStackName}:DomainName"
       DomainNameConfigurations:
-        - CertificateArn: !Ref ACMCertArn
+        - CertificateArn:
+            Fn::ImportValue: !Sub "${CertStackName}:CertificateArn"
 
   ApiMapping:
     Type: AWS::ApiGatewayV2::ApiMapping
+    DeletionPolicy: Delete
     Properties:
       ApiId: !Ref HttpApi
       DomainName: !Ref DomainName
