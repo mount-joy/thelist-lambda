@@ -11,17 +11,14 @@ type dynamoDB struct {
 	session dynamodbiface.DynamoDBAPI
 }
 
-var instance DB
-
 func createInstance() DB {
 	config := aws.Config{Endpoint: aws.String(dbEndpoint)}
 	return &dynamoDB{session: dynamodb.New(session.New(&config))}
 }
 
+var instance DB = createInstance()
+
 // DynamoDB returns a databse session using dynamodb
 func DynamoDB() DB {
-	if instance == nil {
-		instance = createInstance()
-	}
 	return instance
 }
