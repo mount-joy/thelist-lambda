@@ -26,6 +26,7 @@ func NewRouter() Router {
 	routes := []RouteHandler{
 		newHelloWorld(),
 		newGetItems(),
+		newPostList(),
 	}
 	return &router{routes: routes}
 }

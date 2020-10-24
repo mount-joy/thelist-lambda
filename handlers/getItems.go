@@ -28,6 +28,7 @@ func (g *getItems) match(request events.APIGatewayProxyRequest) bool {
 }
 
 func (g *getItems) handle(request events.APIGatewayProxyRequest) (interface{}, int) {
+	log.Printf("Running %s", request.Path)
 	items, err := g.getItems(request.Path)
 
 	if err != nil {
