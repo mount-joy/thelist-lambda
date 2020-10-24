@@ -78,7 +78,13 @@ func TestGetItemsMatch(t *testing.T) {
 			dbMocked.Test(t)
 			defer dbMocked.AssertExpectations(t)
 
-			input := events.APIGatewayProxyRequest{Path: tt.path}
+			input := events.APIGatewayV2HTTPRequest{
+				RequestContext: events.APIGatewayV2HTTPRequestContext{
+					HTTP: events.APIGatewayV2HTTPRequestContextHTTPDescription{
+						Path: tt.path,
+					},
+				},
+			}
 			d := getItems{db: dbMocked}
 			gotRes := d.match(input)
 
@@ -154,8 +160,12 @@ func TestGetItemsHandle(t *testing.T) {
 
 			d := getItems{db: dbMocked}
 
-			input := events.APIGatewayProxyRequest{
-				Path: tt.path,
+			input := events.APIGatewayV2HTTPRequest{
+				RequestContext: events.APIGatewayV2HTTPRequestContext{
+					HTTP: events.APIGatewayV2HTTPRequestContextHTTPDescription{
+						Path: tt.path,
+					},
+				},
 			}
 			gotRes, statusCode := d.handle(input)
 

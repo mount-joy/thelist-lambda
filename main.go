@@ -13,7 +13,7 @@ type handler struct {
 	router handlers.Router
 }
 
-func (h *handler) doRequest(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+func (h *handler) doRequest(request events.APIGatewayV2HTTPRequest) (events.APIGatewayProxyResponse, error) {
 	result, statusCode := h.router.Route(request)
 
 	res, err := json.Marshal(result)

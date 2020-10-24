@@ -24,8 +24,12 @@ func TestFullFlow(t *testing.T) {
 			router: handlers.NewRouter(),
 		}
 
-		request := events.APIGatewayProxyRequest{
-			Path:                  "/hello",
+		request := events.APIGatewayV2HTTPRequest{
+			RequestContext: events.APIGatewayV2HTTPRequestContext{
+				HTTP: events.APIGatewayV2HTTPRequestContextHTTPDescription{
+					Path: "/hello",
+				},
+			},
 			QueryStringParameters: map[string]string{"name": "Joy"},
 		}
 
@@ -41,7 +45,7 @@ type mockRouter struct {
 	mock.Mock
 }
 
-func (mr *mockRouter) Route(request events.APIGatewayProxyRequest) (interface{}, int) {
+func (mr *mockRouter) Route(request events.APIGatewayV2HTTPRequest) (interface{}, int) {
 	args := mr.Called(request)
 	return args.Get(0), args.Int(1)
 }
@@ -53,7 +57,7 @@ func TestHandler(t *testing.T) {
 	}
 	tests := []struct {
 		name           string
-		request        events.APIGatewayProxyRequest
+		request        events.APIGatewayV2HTTPRequest
 		mockRoute      mockRoute
 		expectedBody   string
 		expectedStatus int
@@ -61,8 +65,12 @@ func TestHandler(t *testing.T) {
 	}{
 		{
 			name: "Router doesn't error",
-			request: events.APIGatewayProxyRequest{
-				Path: "/test",
+			request: events.APIGatewayV2HTTPRequest{
+				RequestContext: events.APIGatewayV2HTTPRequestContext{
+					HTTP: events.APIGatewayV2HTTPRequestContextHTTPDescription{
+						Path: "/test",
+					},
+				},
 			},
 			mockRoute: mockRoute{
 				body:   map[string]string{"message": fmt.Sprintf("huge success")},
@@ -73,8 +81,12 @@ func TestHandler(t *testing.T) {
 		},
 		{
 			name: "Route returns nil",
-			request: events.APIGatewayProxyRequest{
-				Path: "/test",
+			request: events.APIGatewayV2HTTPRequest{
+				RequestContext: events.APIGatewayV2HTTPRequestContext{
+					HTTP: events.APIGatewayV2HTTPRequestContextHTTPDescription{
+						Path: "/test",
+					},
+				},
 			},
 			mockRoute: mockRoute{
 				body:   nil,
