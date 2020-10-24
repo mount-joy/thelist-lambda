@@ -29,17 +29,16 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Get dependencies
-        run: |
-          go get -v -t -d ./src/...
+        run: make deps
 
       - name: Build
-        run: GOARCH=amd64 GOOS=linux go build -o main ./src
+        run: make build-lambda.zip
 
       - name: Test
-        run: go test -v ./src/
+        run: make test
 
       - name: Package
-        run: zip lambda.zip main
+        run: make lambda.zip
 
       - name: Deploy
         run: aws lambda update-function-code --function-name ${{ secrets.FUNCTION_NAME }} --zip-file fileb://lambda.zip
