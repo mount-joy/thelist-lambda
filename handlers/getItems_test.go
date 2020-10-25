@@ -7,17 +7,7 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/mount-joy/thelist-lambda/data"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
-
-type mockDB struct {
-	mock.Mock
-}
-
-func (m *mockDB) GetItemsOnList(input *string) (*[]data.Item, error) {
-	args := m.Called(input)
-	return args.Get(0).(*[]data.Item), args.Error(1)
-}
 
 func TestGetItemsMatch(t *testing.T) {
 	tests := []struct {

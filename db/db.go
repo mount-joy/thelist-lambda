@@ -7,4 +7,5 @@ import (
 // DB - interface for talking to the database
 type DB interface {
 	GetItemsOnList(*string) (*[]data.Item, error)
+	UpdateItem(*string, *string, *string) (*data.Item, error)
 }
