@@ -1,4 +1,4 @@
-.PHONY: build start test build-lambda.zip
+.PHONY: build start test build-lambda.zip dynamodb-local dynamodb-create_tables dynamodb-hydrate_tables dynamodb-delete_tables
 
 build:
 	sam build
@@ -17,3 +17,15 @@ lambda.zip: build-lambda.zip
 
 deps:
 	go get -v -t -d
+
+dynamodb-local:
+	docker run -d -p 8000:8000 amazon/dynamodb-local:latest
+
+dynamodb-create_tables:
+	./scripts/create_tables.sh
+
+dynamodb-hydrate_tables:
+	./scripts/hydrate_tables.sh
+
+dynamodb-delete_tables:
+	./scripts/delete_tables.sh

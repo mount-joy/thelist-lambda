@@ -6,6 +6,10 @@ Parameters:
     Type: String
     Description: Name of the lambda role to create
 
+  TablesStackName:
+    Type: String
+    Description: Name of the tables CF stack
+
 Resources:
   LogGroup:
     Type: AWS::Logs::LogGroup
@@ -39,6 +43,20 @@ Resources:
                   - logs:CreateLogStream
                   - logs:PutLogEvents
                 Resource: !GetAtt LogGroup.Arn
+        - PolicyName: DynamoDBTable
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:DeleteItem
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:Query
+                  - dynamodb:UpdateItem
+                Resource:
+                  - Fn::ImportValue: !Sub "${TablesStackName}:ItemsTableArn"
+                  - Fn::ImportValue: !Sub "${TablesStackName}:ListsTableArn"
 
 Outputs:
   RoleArn:
