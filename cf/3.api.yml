@@ -1,0 +1,109 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: AWS API Gateway with a custom domain name
+
+Parameters:
+  RoleStackName:
+    Type: String
+    Description: Name of the lambda role CF stack
+
+  CertStackName:
+    Type: String
+    Description: Name of the certificate CF stack
+
+Resources:
+  HttpApi:
+    Type: AWS::ApiGatewayV2::Api
+    DeletionPolicy: Delete
+    Properties:
+      Name:
+        Fn::ImportValue: !Sub "${RoleStackName}:LambdaName"
+      ProtocolType: HTTP
+
+  Integration:
+    Type: AWS::ApiGatewayV2::Integration
+    DeletionPolicy: Delete
+    Properties:
+      ApiId: !Ref HttpApi
+      Description: Lambda Integration
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !Sub
+        - arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${Arn}/invocations
+        - Arn:
+            Fn::ImportValue: !Sub "${RoleStackName}:LambdaArn"
+      IntegrationMethod: POST
+      ConnectionType: INTERNET
+      PayloadFormatVersion: "2.0"
+
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Delete
+    Properties:
+      LogGroupName: !Join
+        - /
+        - - /aws/api
+          - Fn::ImportValue: !Sub "${RoleStackName}:LambdaName"
+      RetentionInDays: 3
+
+  DefaultRoute:
+    Type: AWS::ApiGatewayV2::Route
+    DeletionPolicy: Delete
+    DependsOn:
+      - Integration
+    Properties:
+      ApiId: !Ref HttpApi
+      RouteKey: $default
+      AuthorizationType: NONE
+      Target: !Join
+        - /
+        - - integrations
+          - !Ref Integration
+
+  Stage:
+    Type: AWS::ApiGatewayV2::Stage
+    DeletionPolicy: Delete
+    Properties:
+      StageName: $default
+      ApiId: !Ref HttpApi
+      AutoDeploy: true
+      AccessLogSettings:
+        DestinationArn: !GetAtt LogGroup.Arn
+        Format: >-
+          {"requestId":"$context.requestId", "ip": "$context.identity.sourceIp",
+          "requestTime":"$context.requestTime","routeKey":"$context.routeKey",
+          "status":"$context.status","integrationErrorMessage":"$context.integrationErrorMessage"}
+
+  Permission:
+    Type: AWS::Lambda::Permission
+    DeletionPolicy: Delete
+    Properties:
+      FunctionName:
+        Fn::ImportValue: !Sub "${RoleStackName}:LambdaArn"
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub
+        - arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${HttpApi}/*
+        - HttpApi: !Ref HttpApi
+
+  DomainName:
+    Type: AWS::ApiGatewayV2::DomainName
+    DeletionPolicy: Delete
+    Properties:
+      DomainName:
+        Fn::ImportValue: !Sub "${CertStackName}:DomainName"
+      DomainNameConfigurations:
+        - CertificateArn:
+            Fn::ImportValue: !Sub "${CertStackName}:CertificateArn"
+
+  ApiMapping:
+    Type: AWS::ApiGatewayV2::ApiMapping
+    DeletionPolicy: Delete
+    Properties:
+      ApiId: !Ref HttpApi
+      DomainName: !Ref DomainName
+      Stage: !Ref Stage
+
+Outputs:
+  RegionalDomainName:
+    Value: !GetAtt DomainName.RegionalDomainName
+    Export:
+      Name: !Sub "${AWS::StackName}:RegionalDomainName"

@@ -1,0 +1,26 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Certificate to use for the API
+
+Parameters:
+  DomainName:
+    Type: String
+    Description: Domain name of the API
+
+Resources:
+  Certificate:
+    Type: AWS::CertificateManager::Certificate
+    DeletionPolicy: Delete
+    Properties:
+      DomainName: !Ref DomainName
+      ValidationMethod: DNS
+
+
+Outputs:
+  CertificateArn:
+    Value: !Ref Certificate
+    Export:
+      Name: !Sub "${AWS::StackName}:CertificateArn"
+  DomainName:
+    Value: !Ref DomainName
+    Export:
+      Name: !Sub "${AWS::StackName}:DomainName"
