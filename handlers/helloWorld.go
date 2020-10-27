@@ -7,7 +7,17 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 )
 
-func helloWorld(request events.APIGatewayProxyRequest) (interface{}, int) {
+type helloWorld struct{}
+
+func newHelloWorld() RouteHandler {
+	return &helloWorld{}
+}
+
+func (h *helloWorld) match(request events.APIGatewayProxyRequest) bool {
+	return request.Path == "/hello"
+}
+
+func (h *helloWorld) handle(request events.APIGatewayProxyRequest) (interface{}, int) {
 	name := request.QueryStringParameters["name"]
 	return map[string]string{"message": fmt.Sprintf("Hello, %v", name)}, http.StatusOK
 }
