@@ -25,6 +25,7 @@ type router struct {
 func NewRouter() Router {
 	routes := []RouteHandler{
 		newHelloWorld(),
+		newGetItems(),
 	}
 	return &router{routes: routes}
 }

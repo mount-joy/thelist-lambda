@@ -4,7 +4,7 @@ build:
 	sam build
 
 start: build
-	sam local start-api
+	sam local start-api --docker-network host
 
 test:
 	go test -v ./...
