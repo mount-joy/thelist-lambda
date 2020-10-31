@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/mount-joy/thelist-lambda/handlers/deleteitem"
 	"github.com/mount-joy/thelist-lambda/handlers/getitems"
 	"github.com/mount-joy/thelist-lambda/handlers/helloworld"
 	"github.com/mount-joy/thelist-lambda/handlers/iface"
@@ -18,6 +19,7 @@ type router struct {
 // NewRouter return the default implementation of Router
 func NewRouter() iface.Router {
 	routes := []iface.RouteHandler{
+		deleteitem.New(),
 		getitems.New(),
 		helloworld.New(),
 		patchitem.New(),
