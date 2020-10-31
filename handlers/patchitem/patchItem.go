@@ -1,4 +1,4 @@
-package handlers
+package patchitem
 
 import (
 	"encoding/json"
@@ -12,24 +12,28 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/mount-joy/thelist-lambda/data"
 	"github.com/mount-joy/thelist-lambda/db"
+	"github.com/mount-joy/thelist-lambda/handlers/iface"
 )
 
 type patchItem struct {
 	db db.DB
 }
 
-func newPatchItem() RouteHandler {
+// New returns an instance of patchItem satisfying the RouteHandler interface
+func New() iface.RouteHandler {
 	return &patchItem{
 		db: db.DynamoDB(),
 	}
 }
 
-// PATCH /lists/<list_id>/items/<item_id>
+// Match returns true if this RouteHandler should handle this request
 func (p *patchItem) match(request events.APIGatewayV2HTTPRequest) bool {
+	// PATCH /lists/<list_id>/items/<item_id>
 	var re = regexp.MustCompile(`^/lists/([\w-]+)/items/([\w-]+)/?$`)
 	return request.RequestContext.HTTP.Method == "PATCH" && re.MatchString(request.RequestContext.HTTP.Path)
 }
 
+// Handle handles this request and returns the response and status code
 func (p *patchItem) handle(request events.APIGatewayV2HTTPRequest) (interface{}, int) {
 	listID, itemID, err := getIDs(request.RequestContext.HTTP.Path)
 	if err != nil {

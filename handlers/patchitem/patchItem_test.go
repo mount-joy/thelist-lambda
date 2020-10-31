@@ -1,4 +1,4 @@
-package handlers
+package patchitem
 
 import (
 	"errors"
@@ -7,6 +7,7 @@ import (
 	"github.com/mount-joy/thelist-lambda/db"
 
 	"github.com/mount-joy/thelist-lambda/data"
+	"github.com/mount-joy/thelist-lambda/handlers/testhelpers"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -93,13 +94,13 @@ func TestPatchItemMatch(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			dbMocked := &mockDB{}
+			dbMocked := &testhelpers.MockDB{}
 			dbMocked.Test(t)
 			defer dbMocked.AssertExpectations(t)
 
-			input := createAPIGatewayV2HTTPRequest(tt.path, tt.method, "")
+			input := testhelpers.CreateAPIGatewayV2HTTPRequest(tt.path, tt.method, "")
 			d := patchItem{db: dbMocked}
-			gotRes := d.match(input)
+			gotRes := d.Match(input)
 
 			assert.Equal(t, tt.expectedRes, gotRes)
 		})
@@ -184,7 +185,7 @@ func TestPatchItemHandle(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			dbMocked := &mockDB{}
+			dbMocked := &testhelpers.MockDB{}
 			dbMocked.Test(t)
 			defer dbMocked.AssertExpectations(t)
 
@@ -197,8 +198,8 @@ func TestPatchItemHandle(t *testing.T) {
 
 			d := patchItem{db: dbMocked}
 
-			input := createAPIGatewayV2HTTPRequest(tt.path, "PATCH", tt.body)
-			gotRes, statusCode := d.handle(input)
+			input := testhelpers.CreateAPIGatewayV2HTTPRequest(tt.path, "PATCH", tt.body)
+			gotRes, statusCode := d.Handle(input)
 
 			assert.Equal(t, tt.expectedStatusCode, statusCode)
 			assert.Equal(t, tt.expectedRes, gotRes)

@@ -4,13 +4,14 @@ import (
 	"encoding/json"
 
 	"github.com/mount-joy/thelist-lambda/handlers"
+	"github.com/mount-joy/thelist-lambda/handlers/iface"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 )
 
 type handler struct {
-	router handlers.Router
+	router iface.Router
 }
 
 func (h *handler) doRequest(request events.APIGatewayV2HTTPRequest) (events.APIGatewayV2HTTPResponse, error) {
@@ -19,7 +20,7 @@ func (h *handler) doRequest(request events.APIGatewayV2HTTPRequest) (events.APIG
 	res, err := json.Marshal(result)
 	if err != nil {
 		return events.APIGatewayV2HTTPResponse{
-			Body:       err.Error(),
+			Body:       "{\"error\": \"" + err.Error() + "\"}",
 			StatusCode: 500,
 		}, nil
 	}
