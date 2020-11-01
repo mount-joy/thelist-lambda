@@ -12,6 +12,11 @@ type mockDB struct {
 	dynamodbiface.DynamoDBAPI
 }
 
+func (m *mockDB) GetItem(input *dynamodb.GetItemInput) (*dynamodb.GetItemOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*dynamodb.GetItemOutput), args.Error(1)
+}
+
 func (m *mockDB) DeleteItem(input *dynamodb.DeleteItemInput) (*dynamodb.DeleteItemOutput, error) {
 	args := m.Called(input)
 	return args.Get(0).(*dynamodb.DeleteItemOutput), args.Error(1)
