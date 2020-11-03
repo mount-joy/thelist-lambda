@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGetConfiguration(t *testing.T) {
+func TestGetConf(t *testing.T) {
 	tests := []struct {
 		name        string
 		runtimeEnv  string
@@ -50,15 +50,13 @@ func TestGetConfiguration(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			getEnv := func(key string) string {
-				if key == "ENV" {
-					return tt.runtimeEnv
-				}
-				return fmt.Sprintf("env_%s", key)
-			}
-
 			confMocked := &conf{
-				getEnv: getEnv,
+				getEnv: func(key string) string {
+					if key == "ENV" {
+						return tt.runtimeEnv
+					}
+					return fmt.Sprintf("env_%s", key)
+				},
 			}
 
 			gotRes := confMocked.getConf()
@@ -66,4 +64,12 @@ func TestGetConfiguration(t *testing.T) {
 			assert.Equal(t, tt.expectedRes, gotRes)
 		})
 	}
+}
+
+func TestGetConfiguration(t *testing.T) {
+	conf := GetConfiguration()
+
+	assert.Greater(t, len(conf.Endpoint), 0)
+	assert.Greater(t, len(conf.TableNames.Items), 0)
+	assert.Greater(t, len(conf.TableNames.Lists), 0)
 }

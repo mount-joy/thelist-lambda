@@ -1,6 +1,9 @@
 package config
 
-import "os"
+import (
+	"fmt"
+	"os"
+)
 
 type conf struct {
 	getEnv func(string) string
@@ -13,20 +16,21 @@ func newConfig() *conf {
 }
 
 func (c *conf) getConf() Config {
-	switch c.getRuntimeEnvironment() {
+	switch env := c.getRuntimeEnvironment(); env {
 	case envNameProd:
 		return c.getProdConfig()
-	default:
+	case envNameDev:
 		return c.getDevConfig()
+	default:
+		panic(fmt.Sprintf("Unknown runtime enviroment: %s", env))
 	}
 }
 
-var environments map[string]bool = map[string]bool{envNameDev: true, envNameProd: true}
-
 func (c *conf) getRuntimeEnvironment() string {
-	value := c.getEnv(envVarEnvironment)
-	if environments[value] {
-		return value
+	environments := map[string]bool{envNameDev: true, envNameProd: true}
+	environment := c.getEnv(envVarEnvironment)
+	if _, ok := environments[environment]; ok {
+		return environment
 	}
 
 	return envNameDev

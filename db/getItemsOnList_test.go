@@ -23,15 +23,14 @@ func (m *mockDB) Query(input *dynamodb.QueryInput) (*dynamodb.QueryOutput, error
 	return args.Get(0).(*dynamodb.QueryOutput), args.Error(1)
 }
 
-var testConfig config.Config = config.Config{
-	Endpoint: "db://thelist",
-	TableNames: config.TableNames{
-		Items: "items-table",
-		Lists: "lists-table",
-	},
-}
-
 func TestGetItemsOnList(t *testing.T) {
+	testConfig := config.Config{
+		Endpoint: "db://thelist",
+		TableNames: config.TableNames{
+			Items: "items-table",
+			Lists: "lists-table",
+		},
+	}
 	tests := []struct {
 		name        string
 		output      *dynamodb.QueryOutput
