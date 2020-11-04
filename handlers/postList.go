@@ -39,7 +39,7 @@ func (g *postList) handle(request events.APIGatewayProxyRequest) (interface{}, i
 
 func (g *postList) createList(path string) (string, error) {
 	listID := generateListID()
-	return listID, g.db.CreateList(listID)
+	return listID, g.db.CreateList(&listID)
 }
 
 func generateListID() (string) {
