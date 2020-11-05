@@ -15,7 +15,7 @@ func (d *dynamoDB) GetItemsOnList(listID *string) (*[]data.Item, error) {
 			":id": {S: listID},
 		},
 		KeyConditionExpression: aws.String("ListId = :id"),
-		TableName:              aws.String(dbTableNameItems),
+		TableName:              aws.String(d.conf.TableNames.Items),
 	}
 
 	result, err := d.session.Query(input)
