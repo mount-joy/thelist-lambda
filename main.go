@@ -20,7 +20,7 @@ func (h *handler) doRequest(request events.APIGatewayV2HTTPRequest) (events.APIG
 	res, err := json.Marshal(result)
 	if err != nil {
 		return events.APIGatewayV2HTTPResponse{
-			Body:       "{\"error\": \"" + err.Error() + "\"}",
+			Body:       `{"error": "` + err.Error() + `"}`,
 			StatusCode: 500,
 		}, nil
 	}

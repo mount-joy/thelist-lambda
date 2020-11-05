@@ -27,14 +27,14 @@ func New() iface.RouteHandler {
 }
 
 // Match returns true if this RouteHandler should handle this request
-func (p *patchItem) match(request events.APIGatewayV2HTTPRequest) bool {
+func (p *patchItem) Match(request events.APIGatewayV2HTTPRequest) bool {
 	// PATCH /lists/<list_id>/items/<item_id>
 	var re = regexp.MustCompile(`^/lists/([\w-]+)/items/([\w-]+)/?$`)
 	return request.RequestContext.HTTP.Method == "PATCH" && re.MatchString(request.RequestContext.HTTP.Path)
 }
 
 // Handle handles this request and returns the response and status code
-func (p *patchItem) handle(request events.APIGatewayV2HTTPRequest) (interface{}, int) {
+func (p *patchItem) Handle(request events.APIGatewayV2HTTPRequest) (interface{}, int) {
 	listID, itemID, err := getIDs(request.RequestContext.HTTP.Path)
 	if err != nil {
 		log.Printf("Error: %s", err.Error())
