@@ -4,5 +4,5 @@ package data
 type Item struct {
 	ID     string `json:"Id"`
 	ListID string `json:"ListId"`
-	Item   string `json:"Item"`
+	Name   string `json:"Name"`
 }

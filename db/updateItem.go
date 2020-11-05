@@ -8,11 +8,11 @@ import (
 	"github.com/mount-joy/thelist-lambda/data"
 )
 
-func (d *dynamoDB) UpdateItem(listID *string, itemID *string, newName *string) (*data.Item, error) {
+func (d *dynamoDB) UpdateItem(listID string, itemID string, newName string) (*data.Item, error) {
 	item := &data.Item{
-		ListID: *listID,
-		ID:     *itemID,
-		Item:   *newName,
+		ListID: listID,
+		ID:     itemID,
+		Name:   newName,
 	}
 	itemToInsert, err := dynamodbattribute.MarshalMap(item)
 	if err != nil {
@@ -30,7 +30,7 @@ func (d *dynamoDB) UpdateItem(listID *string, itemID *string, newName *string) (
 	if err != nil {
 		if aerr, ok := err.(awserr.Error); ok {
 			if aerr.Code() == dynamodb.ErrCodeConditionalCheckFailedException {
-				return nil, NewError(ErrorNotFound)
+				return nil, ErrorNotFound
 			}
 		}
 		return nil, err

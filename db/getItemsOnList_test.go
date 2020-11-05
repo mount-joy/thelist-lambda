@@ -39,12 +39,12 @@ func TestGetItemsOnList(t *testing.T) {
 				Items: []map[string]*dynamodb.AttributeValue{
 					{
 						"ListId": {S: aws.String("474c2Fff7")},
-						"Item":   {S: aws.String("Oranges")},
+						"Name":   {S: aws.String("Oranges")},
 						"Id":     {S: aws.String("1c2fa0a1")},
 					},
 					{
 						"ListId": {S: aws.String("474c2Fff7")},
-						"Item":   {S: aws.String("Apples")},
+						"Name":   {S: aws.String("Apples")},
 						"Id":     {S: aws.String("bb0d5e8e")},
 					},
 				},
@@ -52,12 +52,12 @@ func TestGetItemsOnList(t *testing.T) {
 			outputErr: nil,
 			expectedRes: &[]data.Item{
 				{
-					Item:   "Oranges",
+					Name:   "Oranges",
 					ID:     "1c2fa0a1",
 					ListID: "474c2Fff7",
 				},
 				{
-					Item:   "Apples",
+					Name:   "Apples",
 					ID:     "bb0d5e8e",
 					ListID: "474c2Fff7",
 				},
@@ -99,7 +99,7 @@ func TestGetItemsOnList(t *testing.T) {
 
 			d := dynamoDB{session: dbMocked, conf: testConfig}
 
-			gotRes, gotErr := d.GetItemsOnList(&listID)
+			gotRes, gotErr := d.GetItemsOnList(listID)
 
 			assert.Equal(t, tt.expectedErr, gotErr)
 			assert.Equal(t, tt.expectedRes, gotRes)

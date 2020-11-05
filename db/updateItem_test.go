@@ -17,28 +17,28 @@ func TestUpdateItem(t *testing.T) {
 	tableName := "items-table"
 	conditionExpression := "attribute_exists(Id) AND attribute_exists(ListId)"
 	tests := []struct {
-		name        string
-		outputErr   error
-		expectedRes *data.Item
-		expectedErr error
+		name              string
+		mockedErrResponse error
+		expectedRes       *data.Item
+		expectedErr       error
 	}{
 		{
-			name:        "If the item exists it is updated",
-			outputErr:   nil,
-			expectedRes: &data.Item{ID: itemID, ListID: listID, Item: newName},
-			expectedErr: nil,
+			name:              "If the item exists it is updated",
+			mockedErrResponse: nil,
+			expectedRes:       &data.Item{ID: itemID, ListID: listID, Name: newName},
+			expectedErr:       nil,
 		},
 		{
-			name:        "When db returns an error, that error is returned",
-			outputErr:   errors.New("Something went wrong"),
-			expectedRes: nil,
-			expectedErr: errors.New("Something went wrong"),
+			name:              "When db returns an error, that error is returned",
+			mockedErrResponse: errors.New("Something went wrong"),
+			expectedRes:       nil,
+			expectedErr:       errors.New("Something went wrong"),
 		},
 		{
-			name:        "When Query returns condition not match error, not found error is returned",
-			outputErr:   awserr.New(dynamodb.ErrCodeConditionalCheckFailedException, "Bad", errors.New("Oh dear")),
-			expectedRes: nil,
-			expectedErr: NewError(ErrorNotFound),
+			name:              "If the item doesn't exist the Query returns condition not match error, not found error is returned",
+			mockedErrResponse: awserr.New(dynamodb.ErrCodeConditionalCheckFailedException, "Bad", errors.New("Oh dear")),
+			expectedRes:       nil,
+			expectedErr:       ErrorNotFound,
 		},
 	}
 
@@ -52,18 +52,18 @@ func TestUpdateItem(t *testing.T) {
 				Item: map[string]*dynamodb.AttributeValue{
 					"Id":     {S: &itemID},
 					"ListId": {S: &listID},
-					"Item":   {S: &newName},
+					"Name":   {S: &newName},
 				},
 				TableName:           &tableName,
 				ConditionExpression: &conditionExpression,
 			}
 			dbMocked.
 				On("PutItem", &input).
-				Return(&dynamodb.PutItemOutput{}, tt.outputErr).
+				Return(&dynamodb.PutItemOutput{}, tt.mockedErrResponse).
 				Once()
 
 			d := dynamoDB{session: dbMocked, conf: testConfig}
-			gotRes, gotErr := d.UpdateItem(&listID, &itemID, &newName)
+			gotRes, gotErr := d.UpdateItem(listID, itemID, newName)
 
 			assert.Equal(t, tt.expectedErr, gotErr)
 			assert.Equal(t, tt.expectedRes, gotRes)

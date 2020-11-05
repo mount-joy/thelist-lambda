@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -23,12 +24,13 @@ func newPatchItem() RouteHandler {
 	}
 }
 
-func (g *patchItem) match(request events.APIGatewayV2HTTPRequest) bool {
+// PATCH /lists/<list_id>/items/<item_id>
+func (p *patchItem) match(request events.APIGatewayV2HTTPRequest) bool {
 	var re = regexp.MustCompile(`^/lists/([\w-]+)/items/([\w-]+)/?$`)
 	return request.RequestContext.HTTP.Method == "PATCH" && re.MatchString(request.RequestContext.HTTP.Path)
 }
 
-func (g *patchItem) handle(request events.APIGatewayV2HTTPRequest) (interface{}, int) {
+func (p *patchItem) handle(request events.APIGatewayV2HTTPRequest) (interface{}, int) {
 	listID, itemID, err := getIDs(request.RequestContext.HTTP.Path)
 	if err != nil {
 		log.Printf("Error: %s", err.Error())
@@ -41,12 +43,10 @@ func (g *patchItem) handle(request events.APIGatewayV2HTTPRequest) (interface{},
 		return nil, http.StatusBadRequest
 	}
 
-	item, err := g.db.UpdateItem(listID, itemID, newName)
+	item, err := p.db.UpdateItem(listID, itemID, newName)
 	if err != nil {
-		if aerr, ok := err.(db.Error); ok {
-			if aerr.ErrorType == db.ErrorNotFound {
-				return nil, http.StatusNotFound
-			}
+		if errors.Is(err, db.ErrorNotFound) {
+			return nil, http.StatusNotFound
 		}
 		log.Printf("Error: %s", err.Error())
 		return nil, http.StatusInternalServerError
@@ -55,17 +55,17 @@ func (g *patchItem) handle(request events.APIGatewayV2HTTPRequest) (interface{},
 	return item, http.StatusOK
 }
 
-func getName(body string) (*string, error) {
+func getName(body string) (string, error) {
 	var item data.Item
 	err := json.Unmarshal([]byte(body), &item)
 
-	return &item.Item, err
+	return item.Name, err
 }
 
-func getIDs(path string) (*string, *string, error) {
+func getIDs(path string) (string, string, error) {
 	parts := strings.SplitN(path, "/", 6)
 	if len(parts) < 5 {
-		return nil, nil, fmt.Errorf("Unable to match path: %s", path)
+		return "", "", fmt.Errorf("Unable to match path: %s", path)
 	}
-	return &parts[2], &parts[4], nil
+	return parts[2], parts[4], nil
 }

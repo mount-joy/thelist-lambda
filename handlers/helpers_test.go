@@ -10,12 +10,12 @@ type mockDB struct {
 	mock.Mock
 }
 
-func (m *mockDB) GetItemsOnList(input *string) (*[]data.Item, error) {
+func (m *mockDB) GetItemsOnList(input string) (*[]data.Item, error) {
 	args := m.Called(input)
 	return args.Get(0).(*[]data.Item), args.Error(1)
 }
 
-func (m *mockDB) UpdateItem(listID *string, itemID *string, newName *string) (*data.Item, error) {
+func (m *mockDB) UpdateItem(listID string, itemID string, newName string) (*data.Item, error) {
 	args := m.Called(listID, itemID, newName)
 	return args.Get(0).(*data.Item), args.Error(1)
 }

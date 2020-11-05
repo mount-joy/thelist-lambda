@@ -106,6 +106,11 @@ func TestPatchItemMatch(t *testing.T) {
 	}
 }
 
+type mockUpdateItem struct {
+	res *data.Item
+	err error
+}
+
 func TestPatchItemHandle(t *testing.T) {
 	tests := []struct {
 		name               string
@@ -114,31 +119,23 @@ func TestPatchItemHandle(t *testing.T) {
 		itemID             string
 		newName            string
 		body               string
-		output             *data.Item
-		outputErr          error
 		expectedRes        interface{}
 		expectedStatusCode int
-		shouldCallDB       bool
+		mockOutput         *mockUpdateItem
 	}{
 		{
 			name:               "Returns 'Bad Request' when the path is empty",
 			path:               "",
 			listID:             "test-list-id",
-			output:             nil,
-			outputErr:          nil,
 			expectedRes:        nil,
 			expectedStatusCode: 400,
-			shouldCallDB:       false,
 		},
 		{
 			name:               "Returns 'Bad Request' when the path is not in the correct format",
 			path:               "/lists/test-list-id",
 			listID:             "test-list-id",
-			output:             nil,
-			outputErr:          nil,
 			expectedRes:        nil,
 			expectedStatusCode: 400,
-			shouldCallDB:       false,
 		},
 		{
 			name:               "Returns 'OK' and item when the path matches",
@@ -146,12 +143,10 @@ func TestPatchItemHandle(t *testing.T) {
 			listID:             "test-list-id",
 			itemID:             "test-item-id",
 			newName:            "Apples",
-			body:               "{ \"Item\": \"Apples\" }",
-			output:             &data.Item{Item: "Apples", ID: "888"},
-			outputErr:          nil,
-			expectedRes:        &data.Item{Item: "Apples", ID: "888"},
+			body:               "{ \"Name\": \"Apples\" }",
+			mockOutput:         &mockUpdateItem{res: &data.Item{Name: "Apples", ID: "888"}, err: nil},
+			expectedRes:        &data.Item{Name: "Apples", ID: "888"},
 			expectedStatusCode: 200,
-			shouldCallDB:       true,
 		},
 		{
 			name:               "Returns 'Bad Request' when the body is wrong/missing",
@@ -162,7 +157,6 @@ func TestPatchItemHandle(t *testing.T) {
 			body:               "",
 			expectedRes:        nil,
 			expectedStatusCode: 400,
-			shouldCallDB:       false,
 		},
 		{
 			name:               "Returns 'Bad Request' when the item does not exist",
@@ -170,12 +164,10 @@ func TestPatchItemHandle(t *testing.T) {
 			listID:             "test-list-id",
 			itemID:             "test-item-id",
 			newName:            "Apples",
-			body:               "{ \"Item\": \"Apples\" }",
-			output:             nil,
-			outputErr:          db.NewError(db.ErrorNotFound),
+			body:               "{ \"Name\": \"Apples\" }",
+			mockOutput:         &mockUpdateItem{res: nil, err: db.ErrorNotFound},
 			expectedRes:        nil,
 			expectedStatusCode: 404,
-			shouldCallDB:       true,
 		},
 		{
 			name:               "Returns 'Internal Server Error' when the db returns an error",
@@ -183,12 +175,10 @@ func TestPatchItemHandle(t *testing.T) {
 			listID:             "test-list-id",
 			itemID:             "test-item-id",
 			newName:            "Apples",
-			body:               "{ \"Item\": \"Apples\" }",
-			output:             nil,
-			outputErr:          errors.New("Something bad happened"),
+			body:               "{ \"Name\": \"Apples\" }",
+			mockOutput:         &mockUpdateItem{res: nil, err: errors.New("Something bad happened")},
 			expectedRes:        nil,
 			expectedStatusCode: 500,
-			shouldCallDB:       true,
 		},
 	}
 
@@ -196,13 +186,14 @@ func TestPatchItemHandle(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dbMocked := &mockDB{}
 			dbMocked.Test(t)
-			if tt.shouldCallDB {
-				defer dbMocked.AssertExpectations(t)
-			}
+			defer dbMocked.AssertExpectations(t)
 
-			dbMocked.
-				On("UpdateItem", &tt.listID, &tt.itemID, &tt.newName).
-				Return(tt.output, tt.outputErr)
+			if tt.mockOutput != nil {
+				dbMocked.
+					On("UpdateItem", tt.listID, tt.itemID, tt.newName).
+					Return(tt.mockOutput.res, tt.mockOutput.err).
+					Once()
+			}
 
 			d := patchItem{db: dbMocked}
 

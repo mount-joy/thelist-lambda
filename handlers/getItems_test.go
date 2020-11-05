@@ -118,9 +118,9 @@ func TestGetItemsHandle(t *testing.T) {
 			name:               "Returns 'OK' and results when the path matches",
 			path:               "/lists/test-list-id/items",
 			listID:             "test-list-id",
-			output:             &[]data.Item{data.Item{Item: "ABC", ID: "888"}},
+			output:             &[]data.Item{data.Item{Name: "ABC", ID: "888"}},
 			outputErr:          nil,
-			expectedRes:        &[]data.Item{data.Item{Item: "ABC", ID: "888"}},
+			expectedRes:        &[]data.Item{data.Item{Name: "ABC", ID: "888"}},
 			expectedStatusCode: 200,
 			shouldCallDB:       true,
 		},
@@ -145,7 +145,7 @@ func TestGetItemsHandle(t *testing.T) {
 			}
 
 			dbMocked.
-				On("GetItemsOnList", &tt.listID).
+				On("GetItemsOnList", tt.listID).
 				Return(tt.output, tt.outputErr)
 
 			d := getItems{db: dbMocked}
