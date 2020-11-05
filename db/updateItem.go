@@ -19,9 +19,14 @@ func (d *dynamoDB) UpdateItem(listID string, itemID string, newName string) (*da
 		return nil, err
 	}
 
+	tableName := d.conf.TableNames.Items
+	if len(tableName) == 0 {
+		panic("Items table name not set")
+	}
+
 	input := &dynamodb.PutItemInput{
 		Item:                itemToInsert,
-		TableName:           aws.String(d.conf.TableNames.Items),
+		TableName:           aws.String(tableName),
 		ConditionExpression: aws.String("attribute_exists(Id) AND attribute_exists(ListId)"),
 	}
 

@@ -18,24 +18,28 @@ func TestUpdateItem(t *testing.T) {
 	conditionExpression := "attribute_exists(Id) AND attribute_exists(ListId)"
 	tests := []struct {
 		name              string
+		item              map[string]*dynamodb.AttributeValue
 		mockedErrResponse error
 		expectedRes       *data.Item
 		expectedErr       error
 	}{
 		{
 			name:              "If the item exists it is updated",
+			item:              map[string]*dynamodb.AttributeValue{"Id": {S: &itemID}, "ListId": {S: &listID}, "Name": {S: &newName}},
 			mockedErrResponse: nil,
 			expectedRes:       &data.Item{ID: itemID, ListID: listID, Name: newName},
 			expectedErr:       nil,
 		},
 		{
 			name:              "When db returns an error, that error is returned",
+			item:              map[string]*dynamodb.AttributeValue{"Id": {S: &itemID}, "ListId": {S: &listID}, "Name": {S: &newName}},
 			mockedErrResponse: errors.New("Something went wrong"),
 			expectedRes:       nil,
 			expectedErr:       errors.New("Something went wrong"),
 		},
 		{
 			name:              "If the item doesn't exist the Query returns condition not match error, not found error is returned",
+			item:              map[string]*dynamodb.AttributeValue{"Id": {S: &itemID}, "ListId": {S: &listID}, "Name": {S: &newName}},
 			mockedErrResponse: awserr.New(dynamodb.ErrCodeConditionalCheckFailedException, "Bad", errors.New("Oh dear")),
 			expectedRes:       nil,
 			expectedErr:       ErrorNotFound,
@@ -49,11 +53,7 @@ func TestUpdateItem(t *testing.T) {
 			defer dbMocked.AssertExpectations(t)
 
 			input := dynamodb.PutItemInput{
-				Item: map[string]*dynamodb.AttributeValue{
-					"Id":     {S: &itemID},
-					"ListId": {S: &listID},
-					"Name":   {S: &newName},
-				},
+				Item:                tt.item,
 				TableName:           &tableName,
 				ConditionExpression: &conditionExpression,
 			}
