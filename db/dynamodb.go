@@ -1,6 +1,8 @@
 package db
 
 import (
+	"fmt"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -16,7 +18,11 @@ type dynamoDB struct {
 func createInstance() DB {
 	conf := config.GetConfiguration()
 	config := aws.Config{Endpoint: aws.String(conf.Endpoint)}
-	return &dynamoDB{session: dynamodb.New(session.New(&config)), conf: conf}
+	session, err := session.NewSession(&config)
+	if err != nil {
+		panic(fmt.Sprintf("Failed to create dynamodb session: %s", err.Error()))
+	}
+	return &dynamoDB{session: dynamodb.New(session), conf: conf}
 }
 
 var instance DB = createInstance()

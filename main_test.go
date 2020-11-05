@@ -73,7 +73,7 @@ func TestHandler(t *testing.T) {
 				},
 			},
 			mockRoute: mockRoute{
-				body:   map[string]string{"message": fmt.Sprintf("huge success")},
+				body:   map[string]string{"message": "huge success"},
 				status: 200,
 			},
 			expectedBody:   "{\"message\":\"huge success\"}",
