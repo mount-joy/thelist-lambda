@@ -29,13 +29,16 @@ func (d *dynamoDB) CreateItem(listID string, name string) (*data.Item, error) {
 
 	_, err = d.session.PutItem(input)
 
-	if err != nil {
-		if aerr, ok := err.(awserr.Error); ok {
-			if aerr.Code() == dynamodb.ErrCodeConditionalCheckFailedException {
-				return nil, ErrorIDExists
-			}
+	switch e := err.(type) {
+	case nil:
+		break
+	case awserr.Error:
+		if e.Code() == dynamodb.ErrCodeConditionalCheckFailedException {
+			return nil, ErrorIDExists
 		}
+	default:
 		return nil, err
 	}
+
 	return item, nil
 }

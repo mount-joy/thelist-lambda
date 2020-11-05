@@ -19,28 +19,28 @@ func TestCreateItem(t *testing.T) {
 	tests := []struct {
 		name           string
 		item           map[string]*dynamodb.AttributeValue
-		outputErr      error
+		mockOutputErr  error
 		expectedOutput *data.Item
 		expectedErr    error
 	}{
 		{
 			name:           "If the ID does not exists it creates the item",
 			item:           map[string]*dynamodb.AttributeValue{"Id": {S: &itemID}, "ListId": {S: &listID}, "Name": {S: &itemName}},
-			outputErr:      nil,
+			mockOutputErr:  nil,
 			expectedOutput: &data.Item{ID: itemID, ListID: listID, Name: itemName},
 			expectedErr:    nil,
 		},
 		{
-			name:        "When db returns an error, that error is returned",
-			item:        map[string]*dynamodb.AttributeValue{"Id": {S: &itemID}, "ListId": {S: &listID}, "Name": {S: &itemName}},
-			outputErr:   errors.New("Something went wrong"),
-			expectedErr: errors.New("Something went wrong"),
+			name:          "When db returns an error, that error is returned",
+			item:          map[string]*dynamodb.AttributeValue{"Id": {S: &itemID}, "ListId": {S: &listID}, "Name": {S: &itemName}},
+			mockOutputErr: errors.New("Something went wrong"),
+			expectedErr:   errors.New("Something went wrong"),
 		},
 		{
-			name:        "When DB returns condition not match error, not found error is returned",
-			item:        map[string]*dynamodb.AttributeValue{"Id": {S: &itemID}, "ListId": {S: &listID}, "Name": {S: &itemName}},
-			outputErr:   awserr.New(dynamodb.ErrCodeConditionalCheckFailedException, "Bad", errors.New("Oh dear")),
-			expectedErr: ErrorIDExists,
+			name:          "When DB returns condition not match error, not found error is returned",
+			item:          map[string]*dynamodb.AttributeValue{"Id": {S: &itemID}, "ListId": {S: &listID}, "Name": {S: &itemName}},
+			mockOutputErr: awserr.New(dynamodb.ErrCodeConditionalCheckFailedException, "Bad", errors.New("Oh dear")),
+			expectedErr:   ErrorIDExists,
 		},
 	}
 
@@ -57,7 +57,7 @@ func TestCreateItem(t *testing.T) {
 			}
 			dbMocked.
 				On("PutItem", &input).
-				Return(&dynamodb.PutItemOutput{}, tt.outputErr).
+				Return(&dynamodb.PutItemOutput{}, tt.mockOutputErr).
 				Once()
 
 			d := dynamoDB{session: dbMocked, conf: testConfig, generateID: func() string { return itemID }}
