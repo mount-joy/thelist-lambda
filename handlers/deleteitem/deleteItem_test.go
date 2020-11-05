@@ -4,8 +4,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/mount-joy/thelist-lambda/db"
-
 	"github.com/mount-joy/thelist-lambda/data"
 	"github.com/mount-joy/thelist-lambda/handlers/testhelpers"
 	"github.com/stretchr/testify/assert"
@@ -140,14 +138,6 @@ func TestDeleteItemHandle(t *testing.T) {
 			itemID:             "test-item-id",
 			mockOutput:         &mockDeleteItem{res: &data.Item{Name: "Apples", ID: "888"}, err: nil},
 			expectedStatusCode: 200,
-		},
-		{
-			name:               "Returns 'Bad Request' when the item does not exist",
-			path:               "/lists/test-list-id/items/test-item-id/",
-			listID:             "test-list-id",
-			itemID:             "test-item-id",
-			mockOutput:         &mockDeleteItem{res: nil, err: db.ErrorNotFound},
-			expectedStatusCode: 404,
 		},
 		{
 			name:               "Returns 'Internal Server Error' when the db returns an error",
