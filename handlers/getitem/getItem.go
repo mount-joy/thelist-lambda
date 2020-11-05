@@ -1,4 +1,4 @@
-package getitems
+package getitem
 
 import (
 	"fmt"
@@ -17,7 +17,7 @@ type getItems struct {
 	db db.DB
 }
 
-// New returns an instance of getItems satisfying the RouteHandler interface
+// New returns an instance of deleteItem satisfying the RouteHandler interface
 func New() iface.RouteHandler {
 	return &getItems{
 		db: db.DynamoDB(),
@@ -26,36 +26,36 @@ func New() iface.RouteHandler {
 
 // Match returns true if this RouteHandler should handle this request
 func (g *getItems) Match(request events.APIGatewayV2HTTPRequest) bool {
-	// GET /lists/<list_id>/items
-	var re = regexp.MustCompile(`^/lists/([\w-]+)/items/?$`)
+	// GET /lists/<list_id>/items/<item_id>
+	var re = regexp.MustCompile(`^/lists/([\w-]+)/items/([\w-]+)/?$`)
 	return request.RequestContext.HTTP.Method == "GET" && re.MatchString(request.RequestContext.HTTP.Path)
 }
 
 // Handle handles this request and returns the response and status code
 func (g *getItems) Handle(request events.APIGatewayV2HTTPRequest) (interface{}, int) {
-	items, err := g.getItems(request.RequestContext.HTTP.Path)
+	item, err := g.getItem(request.RequestContext.HTTP.Path)
 
 	if err != nil {
 		log.Printf("Error: %s", err.Error())
 		return nil, http.StatusInternalServerError
 	}
 
-	return items, http.StatusOK
+	return item, http.StatusOK
 }
 
-func (g *getItems) getItems(path string) (*[]data.Item, error) {
-	listID, err := getListID(path)
+func (g *getItems) getItem(path string) (*data.Item, error) {
+	listID, itemID, err := getIDs(path)
 	if err != nil {
 		return nil, err
 	}
 
-	return g.db.GetItemsOnList(listID)
+	return g.db.GetItem(listID, itemID)
 }
 
-func getListID(path string) (string, error) {
-	parts := strings.SplitN(path, "/", 4)
-	if len(parts) < 4 {
-		return "", fmt.Errorf("Unable to match path: %s", path)
+func getIDs(path string) (string, string, error) {
+	parts := strings.SplitN(path, "/", 6)
+	if len(parts) < 5 {
+		return "", "", fmt.Errorf("Unable to match path: %s", path)
 	}
-	return parts[2], nil
+	return parts[2], parts[4], nil
 }

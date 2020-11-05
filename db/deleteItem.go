@@ -17,7 +17,7 @@ func (d *dynamoDB) DeleteItem(listID string, itemID string) error {
 			"ListId": {S: &listID},
 			"Id":     {S: &itemID},
 		},
-		TableName: aws.String(d.conf.TableNames.Items),
+		TableName: aws.String(tableName),
 	}
 
 	_, err := d.session.DeleteItem(input)
@@ -33,5 +33,5 @@ func (d *dynamoDB) DeleteItem(listID string, itemID string) error {
 		return err
 	}
 
-	return err
+	return nil
 }
