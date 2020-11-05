@@ -11,6 +11,12 @@ type MockDB struct {
 	mock.Mock
 }
 
+// DeleteItem mocks the DB DeleteItem method
+func (m *MockDB) DeleteItem(listID string, itemID string) error {
+	args := m.Called(listID, itemID)
+	return args.Error(1)
+}
+
 // GetItemsOnList mocks the DB GetItemsOnList method
 func (m *MockDB) GetItemsOnList(input string) (*[]data.Item, error) {
 	args := m.Called(input)
