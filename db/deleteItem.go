@@ -22,12 +22,16 @@ func (d *dynamoDB) DeleteItem(listID string, itemID string) error {
 
 	_, err := d.session.DeleteItem(input)
 
-	if err != nil {
-		if aerr, ok := err.(awserr.Error); ok {
-			if aerr.Code() == dynamodb.ErrCodeConditionalCheckFailedException {
-				return nil
-			}
+	switch e := err.(type) {
+	case nil:
+		break
+	case awserr.Error:
+		if e.Code() == dynamodb.ErrCodeConditionalCheckFailedException {
+			return nil
 		}
+	default:
+		return err
 	}
+
 	return err
 }
