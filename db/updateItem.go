@@ -32,12 +32,14 @@ func (d *dynamoDB) UpdateItem(listID string, itemID string, newName string) (*da
 
 	_, err = d.session.PutItem(input)
 
-	if err != nil {
-		if aerr, ok := err.(awserr.Error); ok {
-			if aerr.Code() == dynamodb.ErrCodeConditionalCheckFailedException {
-				return nil, ErrorNotFound
-			}
+	switch e := err.(type) {
+	case nil:
+		break
+	case awserr.Error:
+		if e.Code() == dynamodb.ErrCodeConditionalCheckFailedException {
+			return nil, ErrorNotFound
 		}
+	default:
 		return nil, err
 	}
 	return item, nil
