@@ -7,11 +7,11 @@ import (
 	"github.com/mount-joy/thelist-lambda/data"
 )
 
-func (d *dynamoDB) GetItem(listID *string, itemID *string) (*data.Item, error) {
+func (d *dynamoDB) GetItem(listID string, itemID string) (*data.Item, error) {
 	input := &dynamodb.GetItemInput{
 		Key: map[string]*dynamodb.AttributeValue{
-			"ListId": {S: listID},
-			"Id":     {S: itemID},
+			"ListId": {S: &listID},
+			"Id":     {S: &itemID},
 		},
 		TableName: aws.String(d.conf.TableNames.Items),
 	}

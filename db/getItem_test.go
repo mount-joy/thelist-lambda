@@ -28,10 +28,10 @@ func TestGetItem(t *testing.T) {
 				Item: map[string]*dynamodb.AttributeValue{
 					"Id":     {S: &itemID},
 					"ListId": {S: &listID},
-					"Item":   {S: &name},
+					"Name":   {S: &name},
 				},
 			},
-			expectedRes: &data.Item{ID: itemID, ListID: listID, Item: name},
+			expectedRes: &data.Item{ID: itemID, ListID: listID, Name: name},
 			expectedErr: nil,
 		},
 		{
@@ -62,7 +62,7 @@ func TestGetItem(t *testing.T) {
 				Once()
 
 			d := dynamoDB{session: dbMocked, conf: testConfig}
-			gotRes, gotErr := d.GetItem(&listID, &itemID)
+			gotRes, gotErr := d.GetItem(listID, itemID)
 
 			assert.Equal(t, tt.expectedErr, gotErr)
 			assert.Equal(t, tt.expectedRes, gotRes)

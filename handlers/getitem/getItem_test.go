@@ -1,7 +1,6 @@
 package getitem
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/mount-joy/thelist-lambda/handlers/testhelpers"
@@ -106,58 +105,50 @@ func TestGetItemMatch(t *testing.T) {
 	}
 }
 
+type mockGetItem struct {
+	res *data.Item
+	err error
+}
+
 func TestGetItemHandle(t *testing.T) {
 	tests := []struct {
 		name               string
 		path               string
 		listID             string
 		itemID             string
-		output             *data.Item
-		outputErr          error
+		mockOutput         *mockGetItem
 		expectedRes        interface{}
 		expectedStatusCode int
-		shouldCallDB       bool
 	}{
 		{
 			name:               "Returns 'Internal Server Error' when the path is empty",
 			path:               "",
 			listID:             "test-list-id",
-			output:             nil,
-			outputErr:          nil,
 			expectedRes:        nil,
 			expectedStatusCode: 500,
-			shouldCallDB:       false,
 		},
 		{
 			name:               "Returns 'Internal Server Error' when the path is not in the correct format",
 			path:               "/lists/test-list-id",
 			listID:             "test-list-id",
-			output:             nil,
-			outputErr:          nil,
 			expectedRes:        nil,
 			expectedStatusCode: 500,
-			shouldCallDB:       false,
 		},
 		{
 			name:               "Returns 'OK' and results when the path matches",
 			path:               "/lists/test-list-id/items/test-item-id",
 			listID:             "test-list-id",
 			itemID:             "test-item-id",
-			output:             &data.Item{Item: "ABC", ID: "888"},
-			outputErr:          nil,
-			expectedRes:        &data.Item{Item: "ABC", ID: "888"},
+			mockOutput:         &mockGetItem{res: &data.Item{Name: "ABC", ID: "888"}, err: nil},
+			expectedRes:        &data.Item{Name: "ABC", ID: "888"},
 			expectedStatusCode: 200,
-			shouldCallDB:       true,
 		},
 		{
 			name:               "Returns 'Internal Server Error' when the path is not in the correct format",
 			path:               "/lists/test-list-id/items",
 			listID:             "test-list-id",
-			output:             nil,
-			outputErr:          errors.New("It went wrong"),
 			expectedRes:        nil,
 			expectedStatusCode: 500,
-			shouldCallDB:       false,
 		},
 	}
 
@@ -165,13 +156,14 @@ func TestGetItemHandle(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dbMocked := &testhelpers.MockDB{}
 			dbMocked.Test(t)
-			if tt.shouldCallDB {
-				defer dbMocked.AssertExpectations(t)
-			}
+			defer dbMocked.AssertExpectations(t)
 
-			dbMocked.
-				On("GetItem", &tt.listID, &tt.itemID).
-				Return(tt.output, tt.outputErr)
+			if tt.mockOutput != nil {
+				dbMocked.
+					On("GetItem", tt.listID, tt.itemID).
+					Return(tt.mockOutput.res, tt.mockOutput.err).
+					Once()
+			}
 
 			d := getItems{db: dbMocked}
 
