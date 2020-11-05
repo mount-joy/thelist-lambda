@@ -26,6 +26,7 @@ func New() iface.RouteHandler {
 
 // Match returns true if this RouteHandler should handle this request
 func (g *getItems) Match(request events.APIGatewayV2HTTPRequest) bool {
+	// GET /lists/<list_id>/items
 	var re = regexp.MustCompile(`^/lists/([\w-]+)/items/?$`)
 	return request.RequestContext.HTTP.Method == "GET" && re.MatchString(request.RequestContext.HTTP.Path)
 }
