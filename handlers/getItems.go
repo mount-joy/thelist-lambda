@@ -47,10 +47,10 @@ func (g *getItems) getItems(path string) (*[]data.Item, error) {
 	return g.db.GetItemsOnList(listID)
 }
 
-func getListID(path string) (*string, error) {
+func getListID(path string) (string, error) {
 	parts := strings.SplitN(path, "/", 4)
 	if len(parts) < 4 {
-		return nil, fmt.Errorf("Unable to match path: %s", path)
+		return "", fmt.Errorf("Unable to match path: %s", path)
 	}
-	return &parts[2], nil
+	return parts[2], nil
 }

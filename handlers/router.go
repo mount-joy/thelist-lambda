@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -26,6 +27,7 @@ func NewRouter() Router {
 	routes := []RouteHandler{
 		newHelloWorld(),
 		newGetItems(),
+		newPatchItem(),
 	}
 	return &router{routes: routes}
 }
@@ -38,5 +40,6 @@ func (r *router) Route(request events.APIGatewayV2HTTPRequest) (interface{}, int
 		}
 	}
 
+	log.Printf("Unable to match %s %s", request.RequestContext.HTTP.Method, request.RequestContext.HTTP.Path)
 	return nil, http.StatusNotFound
 }

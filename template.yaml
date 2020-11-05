@@ -20,7 +20,7 @@ Resources:
             Path: /{proxy+}
             TimeoutInMillis: 10000
             PayloadFormatVersion: "2.0"
-            Method: GET
+            Method: ANY
 
   HttpApi:
     Type: AWS::Serverless::HttpApi
