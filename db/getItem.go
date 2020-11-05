@@ -8,12 +8,17 @@ import (
 )
 
 func (d *dynamoDB) GetItem(listID string, itemID string) (*data.Item, error) {
+	tableName := d.conf.TableNames.Items
+	if len(tableName) == 0 {
+		panic("Items table name not set")
+	}
+
 	input := &dynamodb.GetItemInput{
 		Key: map[string]*dynamodb.AttributeValue{
 			"ListId": {S: &listID},
 			"Id":     {S: &itemID},
 		},
-		TableName: aws.String(d.conf.TableNames.Items),
+		TableName: aws.String(tableName),
 	}
 
 	res, err := d.session.GetItem(input)

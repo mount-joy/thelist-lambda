@@ -26,14 +26,14 @@ func New() iface.RouteHandler {
 }
 
 // Match returns true if this RouteHandler should handle this request
-func (g *postItem) Match(request events.APIGatewayV2HTTPRequest) bool {
+func (p *postItem) Match(request events.APIGatewayV2HTTPRequest) bool {
 	// POST /lists/<list_id>/items
 	var re = regexp.MustCompile(`^/lists/([\w-]+)/items/?$`)
 	return request.RequestContext.HTTP.Method == "POST" && re.MatchString(request.RequestContext.HTTP.Path)
 }
 
 // Handle handles this request and returns the response and status code
-func (g *postItem) Handle(request events.APIGatewayV2HTTPRequest) (interface{}, int) {
+func (p *postItem) Handle(request events.APIGatewayV2HTTPRequest) (interface{}, int) {
 	listID, err := getListID(request.RequestContext.HTTP.Path)
 	if err != nil {
 		log.Printf("Error: %s", err.Error())
@@ -46,7 +46,7 @@ func (g *postItem) Handle(request events.APIGatewayV2HTTPRequest) (interface{}, 
 		return nil, http.StatusBadRequest
 	}
 
-	item, err := g.db.CreateItem(listID, name)
+	item, err := p.db.CreateItem(listID, name)
 	if err != nil {
 		log.Printf("Error: %s", err.Error())
 		return nil, http.StatusInternalServerError

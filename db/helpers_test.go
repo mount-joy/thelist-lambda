@@ -21,8 +21,8 @@ func TestGenerateID(t *testing.T) {
 	})
 
 	t.Run("Shouldn't clash", func(t *testing.T) {
-		setOfIDs := make(map[string]bool)
 		n := 1000000
+		setOfIDs := make(map[string]bool, n)
 
 		for i := 1; i <= n; i++ {
 			id := generateID()

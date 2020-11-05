@@ -21,9 +21,14 @@ func (d *dynamoDB) CreateItem(listID string, name string) (*data.Item, error) {
 		return nil, err
 	}
 
+	tableName := d.conf.TableNames.Items
+	if len(tableName) == 0 {
+		panic("Items table name not set")
+	}
+
 	input := &dynamodb.PutItemInput{
 		Item:                itemToInsert,
-		TableName:           aws.String(d.conf.TableNames.Items),
+		TableName:           aws.String(tableName),
 		ConditionExpression: aws.String("attribute_not_exists(Id)"),
 	}
 
