@@ -22,13 +22,13 @@ func newGetItems() RouteHandler {
 	}
 }
 
-func (g *getItems) match(request events.APIGatewayProxyRequest) bool {
+func (g *getItems) match(request events.APIGatewayV2HTTPRequest) bool {
 	var re = regexp.MustCompile(`^/lists/([\w-]+)/items/?$`)
-	return re.MatchString(request.Path)
+	return re.MatchString(request.RequestContext.HTTP.Path)
 }
 
-func (g *getItems) handle(request events.APIGatewayProxyRequest) (interface{}, int) {
-	items, err := g.getItems(request.Path)
+func (g *getItems) handle(request events.APIGatewayV2HTTPRequest) (interface{}, int) {
+	items, err := g.getItems(request.RequestContext.HTTP.Path)
 
 	if err != nil {
 		log.Printf("Error: %s", err.Error())

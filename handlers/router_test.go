@@ -12,12 +12,12 @@ type mockRoute struct {
 	mock.Mock
 }
 
-func (m *mockRoute) match(request events.APIGatewayProxyRequest) bool {
+func (m *mockRoute) match(request events.APIGatewayV2HTTPRequest) bool {
 	args := m.Called(request)
 	return args.Bool(0)
 }
 
-func (m *mockRoute) handle(request events.APIGatewayProxyRequest) (interface{}, int) {
+func (m *mockRoute) handle(request events.APIGatewayV2HTTPRequest) (interface{}, int) {
 	args := m.Called(request)
 	return args.Get(0), args.Int(1)
 }
@@ -63,7 +63,7 @@ func TestRoute(t *testing.T) {
 		},
 	}
 
-	request := events.APIGatewayProxyRequest{}
+	request := events.APIGatewayV2HTTPRequest{}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
