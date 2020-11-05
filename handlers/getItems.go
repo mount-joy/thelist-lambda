@@ -22,13 +22,13 @@ func newGetItems() RouteHandler {
 	}
 }
 
-func (g *getItems) match(request events.APIGatewayProxyRequest) bool {
+func (g *getItems) match(request events.APIGatewayV2HTTPRequest) bool {
 	var re = regexp.MustCompile(`^/lists/([\w-]+)/items/?$`)
-	return re.MatchString(request.Path)
+	return re.MatchString(request.RequestContext.HTTP.Path)
 }
 
-func (g *getItems) handle(request events.APIGatewayProxyRequest) (interface{}, int) {
-	items, err := g.getItems(request.Path)
+func (g *getItems) handle(request events.APIGatewayV2HTTPRequest) (interface{}, int) {
+	items, err := g.getItems(request.RequestContext.HTTP.Path)
 
 	if err != nil {
 		log.Printf("Error: %s", err.Error())
@@ -47,10 +47,10 @@ func (g *getItems) getItems(path string) (*[]data.Item, error) {
 	return g.db.GetItemsOnList(listID)
 }
 
-func getListID(path string) (*string, error) {
+func getListID(path string) (string, error) {
 	parts := strings.SplitN(path, "/", 4)
 	if len(parts) < 4 {
-		return nil, fmt.Errorf("Unable to match path: %s", path)
+		return "", fmt.Errorf("Unable to match path: %s", path)
 	}
-	return &parts[2], nil
+	return parts[2], nil
 }

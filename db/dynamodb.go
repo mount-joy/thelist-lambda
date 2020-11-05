@@ -7,19 +7,22 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
+	"github.com/mount-joy/thelist-lambda/config"
 )
 
 type dynamoDB struct {
 	session dynamodbiface.DynamoDBAPI
+	conf    config.Config
 }
 
 func createInstance() DB {
-	config := aws.Config{Endpoint: aws.String(dbEndpoint)}
+	conf := config.GetConfiguration()
+	config := aws.Config{Endpoint: aws.String(conf.Endpoint)}
 	session, err := session.NewSession(&config)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to create dynamodb session: %s", err.Error()))
 	}
-	return &dynamoDB{session: dynamodb.New(session)}
+	return &dynamoDB{session: dynamodb.New(session), conf: conf}
 }
 
 var instance DB = createInstance()

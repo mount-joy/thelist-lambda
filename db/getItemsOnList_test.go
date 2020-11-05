@@ -6,23 +6,19 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
+	"github.com/mount-joy/thelist-lambda/config"
 	"github.com/mount-joy/thelist-lambda/data"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
 
-type mockDB struct {
-	mock.Mock
-	dynamodbiface.DynamoDBAPI
-}
-
-func (m *mockDB) Query(input *dynamodb.QueryInput) (*dynamodb.QueryOutput, error) {
-	args := m.Called(input)
-	return args.Get(0).(*dynamodb.QueryOutput), args.Error(1)
-}
-
 func TestGetItemsOnList(t *testing.T) {
+	testConfig := config.Config{
+		Endpoint: "db://thelist",
+		TableNames: config.TableNames{
+			Items: "items-table",
+			Lists: "lists-table",
+		},
+	}
 	tests := []struct {
 		name        string
 		output      *dynamodb.QueryOutput
@@ -43,12 +39,12 @@ func TestGetItemsOnList(t *testing.T) {
 				Items: []map[string]*dynamodb.AttributeValue{
 					{
 						"ListId": {S: aws.String("474c2Fff7")},
-						"Item":   {S: aws.String("Oranges")},
+						"Name":   {S: aws.String("Oranges")},
 						"Id":     {S: aws.String("1c2fa0a1")},
 					},
 					{
 						"ListId": {S: aws.String("474c2Fff7")},
-						"Item":   {S: aws.String("Apples")},
+						"Name":   {S: aws.String("Apples")},
 						"Id":     {S: aws.String("bb0d5e8e")},
 					},
 				},
@@ -56,12 +52,14 @@ func TestGetItemsOnList(t *testing.T) {
 			outputErr: nil,
 			expectedRes: &[]data.Item{
 				{
-					Item: "Oranges",
-					ID:   "1c2fa0a1",
+					Name:   "Oranges",
+					ID:     "1c2fa0a1",
+					ListID: "474c2Fff7",
 				},
 				{
-					Item: "Apples",
-					ID:   "bb0d5e8e",
+					Name:   "Apples",
+					ID:     "bb0d5e8e",
+					ListID: "474c2Fff7",
 				},
 			},
 			expectedErr: nil,
@@ -92,16 +90,16 @@ func TestGetItemsOnList(t *testing.T) {
 			input := dynamodb.QueryInput{
 				ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{":id": {S: &listID}},
 				KeyConditionExpression:    aws.String("ListId = :id"),
-				TableName:                 aws.String("items"),
+				TableName:                 aws.String("items-table"),
 			}
 			dbMocked.
 				On("Query", &input).
 				Return(tt.output, tt.outputErr).
 				Once()
 
-			d := dynamoDB{session: dbMocked}
+			d := dynamoDB{session: dbMocked, conf: testConfig}
 
-			gotRes, gotErr := d.GetItemsOnList(&listID)
+			gotRes, gotErr := d.GetItemsOnList(listID)
 
 			assert.Equal(t, tt.expectedErr, gotErr)
 			assert.Equal(t, tt.expectedRes, gotRes)

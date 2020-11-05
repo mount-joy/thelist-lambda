@@ -9,13 +9,13 @@ import (
 	"github.com/mount-joy/thelist-lambda/data"
 )
 
-func (d *dynamoDB) GetItemsOnList(listID *string) (*[]data.Item, error) {
+func (d *dynamoDB) GetItemsOnList(listID string) (*[]data.Item, error) {
 	input := &dynamodb.QueryInput{
 		ExpressionAttributeValues: map[string]*dynamodb.AttributeValue{
-			":id": {S: listID},
+			":id": {S: &listID},
 		},
 		KeyConditionExpression: aws.String("ListId = :id"),
-		TableName:              aws.String(dbTableNameItems),
+		TableName:              aws.String(d.conf.TableNames.Items),
 	}
 
 	result, err := d.session.Query(input)

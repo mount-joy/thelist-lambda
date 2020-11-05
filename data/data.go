@@ -2,6 +2,7 @@ package data
 
 // Item represents the data structure of an item on a list
 type Item struct {
-	Item string `json:"Item"`
-	ID   string `json:"Id"`
+	ID     string `json:"Id"`
+	ListID string `json:"ListId"`
+	Name   string `json:"Name"`
 }

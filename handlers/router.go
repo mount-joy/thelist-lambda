@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -8,13 +9,13 @@ import (
 
 // Router - interface for routing requests to the right handler
 type Router interface {
-	Route(events.APIGatewayProxyRequest) (interface{}, int)
+	Route(events.APIGatewayV2HTTPRequest) (interface{}, int)
 }
 
 // RouteHandler - interface for matching and handling a particular request
 type RouteHandler interface {
-	match(request events.APIGatewayProxyRequest) bool
-	handle(events.APIGatewayProxyRequest) (interface{}, int)
+	match(events.APIGatewayV2HTTPRequest) bool
+	handle(events.APIGatewayV2HTTPRequest) (interface{}, int)
 }
 
 type router struct {
@@ -26,17 +27,19 @@ func NewRouter() Router {
 	routes := []RouteHandler{
 		newHelloWorld(),
 		newGetItems(),
+		newPatchItem(),
 	}
 	return &router{routes: routes}
 }
 
 // Route call the appropriate handler for a request based on its path
-func (r *router) Route(request events.APIGatewayProxyRequest) (interface{}, int) {
+func (r *router) Route(request events.APIGatewayV2HTTPRequest) (interface{}, int) {
 	for _, route := range r.routes {
 		if route.match(request) {
 			return route.handle(request)
 		}
 	}
 
+	log.Printf("Unable to match %s %s", request.RequestContext.HTTP.Method, request.RequestContext.HTTP.Path)
 	return nil, http.StatusNotFound
 }
