@@ -14,24 +14,24 @@ func TestDeleteItem(t *testing.T) {
 	itemID := "b6cf642d"
 	tableName := "items-table"
 	tests := []struct {
-		name        string
-		outputErr   error
-		expectedErr error
+		name            string
+		mockResponseErr error
+		expectedErr     error
 	}{
 		{
-			name:        "If the item exists it is deleted",
-			outputErr:   nil,
-			expectedErr: nil,
+			name:            "If the item exists it is deleted",
+			mockResponseErr: nil,
+			expectedErr:     nil,
 		},
 		{
-			name:        "When db returns an error, that error is returned",
-			outputErr:   errors.New("Something went wrong"),
-			expectedErr: errors.New("Something went wrong"),
+			name:            "When db returns an error, that error is returned",
+			mockResponseErr: errors.New("Something went wrong"),
+			expectedErr:     errors.New("Something went wrong"),
 		},
 		{
-			name:        "When Query returns condition not match error, not found error is returned",
-			outputErr:   awserr.New(dynamodb.ErrCodeConditionalCheckFailedException, "Bad", errors.New("Oh dear")),
-			expectedErr: NewError(ErrorNotFound),
+			name:            "When Query returns condition not match error, then succeeds",
+			mockResponseErr: awserr.New(dynamodb.ErrCodeConditionalCheckFailedException, "Bad", errors.New("Oh dear")),
+			expectedErr:     nil,
 		},
 	}
 
@@ -50,11 +50,11 @@ func TestDeleteItem(t *testing.T) {
 			}
 			dbMocked.
 				On("DeleteItem", &input).
-				Return(&dynamodb.DeleteItemOutput{}, tt.outputErr).
+				Return(&dynamodb.DeleteItemOutput{}, tt.mockResponseErr).
 				Once()
 
 			d := dynamoDB{session: dbMocked, conf: testConfig}
-			gotErr := d.DeleteItem(&listID, &itemID)
+			gotErr := d.DeleteItem(listID, itemID)
 
 			assert.Equal(t, tt.expectedErr, gotErr)
 		})

@@ -6,11 +6,16 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 )
 
-func (d *dynamoDB) DeleteItem(listID *string, itemID *string) error {
+func (d *dynamoDB) DeleteItem(listID string, itemID string) error {
+	tableName := d.conf.TableNames.Items
+	if len(tableName) == 0 {
+		panic("Items table name not set")
+	}
+
 	input := &dynamodb.DeleteItemInput{
 		Key: map[string]*dynamodb.AttributeValue{
-			"ListId": {S: listID},
-			"Id":     {S: itemID},
+			"ListId": {S: &listID},
+			"Id":     {S: &itemID},
 		},
 		TableName: aws.String(d.conf.TableNames.Items),
 	}
@@ -20,7 +25,7 @@ func (d *dynamoDB) DeleteItem(listID *string, itemID *string) error {
 	if err != nil {
 		if aerr, ok := err.(awserr.Error); ok {
 			if aerr.Code() == dynamodb.ErrCodeConditionalCheckFailedException {
-				return NewError(ErrorNotFound)
+				return nil
 			}
 		}
 	}

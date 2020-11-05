@@ -107,64 +107,55 @@ func TestDeleteItemMatch(t *testing.T) {
 	}
 }
 
+type mockDeleteItem struct {
+	res *data.Item
+	err error
+}
+
 func TestDeleteItemHandle(t *testing.T) {
 	tests := []struct {
 		name               string
 		path               string
 		listID             string
 		itemID             string
-		output             *data.Item
-		outputErr          error
+		mockOutput         *mockDeleteItem
 		expectedStatusCode int
-		shouldCallDB       bool
 	}{
 		{
 			name:               "Returns 'Bad Request' when the path is empty",
 			path:               "",
 			listID:             "test-list-id",
-			output:             nil,
-			outputErr:          nil,
 			expectedStatusCode: 400,
-			shouldCallDB:       false,
 		},
 		{
 			name:               "Returns 'Bad Request' when the path is not in the correct format",
 			path:               "/lists/test-list-id",
 			listID:             "test-list-id",
-			output:             nil,
-			outputErr:          nil,
 			expectedStatusCode: 400,
-			shouldCallDB:       false,
 		},
 		{
 			name:               "Returns 'OK' and item when the path matches",
 			path:               "/lists/test-list-id/items/test-item-id/",
 			listID:             "test-list-id",
 			itemID:             "test-item-id",
-			output:             &data.Item{Item: "Apples", ID: "888"},
-			outputErr:          nil,
+			mockOutput:         &mockDeleteItem{res: &data.Item{Name: "Apples", ID: "888"}, err: nil},
 			expectedStatusCode: 200,
-			shouldCallDB:       true,
 		},
 		{
 			name:               "Returns 'Bad Request' when the item does not exist",
 			path:               "/lists/test-list-id/items/test-item-id/",
 			listID:             "test-list-id",
 			itemID:             "test-item-id",
-			output:             nil,
-			outputErr:          db.NewError(db.ErrorNotFound),
+			mockOutput:         &mockDeleteItem{res: nil, err: db.ErrorNotFound},
 			expectedStatusCode: 404,
-			shouldCallDB:       true,
 		},
 		{
 			name:               "Returns 'Internal Server Error' when the db returns an error",
 			path:               "/lists/test-list-id/items/test-item-id/",
 			listID:             "test-list-id",
 			itemID:             "test-item-id",
-			output:             nil,
-			outputErr:          errors.New("Something bad happened"),
+			mockOutput:         &mockDeleteItem{res: nil, err: errors.New("Something bad happened")},
 			expectedStatusCode: 500,
-			shouldCallDB:       true,
 		},
 	}
 
@@ -172,13 +163,14 @@ func TestDeleteItemHandle(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dbMocked := &testhelpers.MockDB{}
 			dbMocked.Test(t)
-			if tt.shouldCallDB {
-				defer dbMocked.AssertExpectations(t)
-			}
+			defer dbMocked.AssertExpectations(t)
 
-			dbMocked.
-				On("DeleteItem", &tt.listID, &tt.itemID).
-				Return(tt.output, tt.outputErr)
+			if tt.mockOutput != nil {
+				dbMocked.
+					On("DeleteItem", tt.listID, tt.itemID).
+					Return(tt.mockOutput.res, tt.mockOutput.err).
+					Once()
+			}
 
 			d := deleteItem{db: dbMocked}
 
