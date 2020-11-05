@@ -5,29 +5,22 @@ import (
 	"net/http"
 
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/mount-joy/thelist-lambda/handlers/getitems"
+	"github.com/mount-joy/thelist-lambda/handlers/helloworld"
+	"github.com/mount-joy/thelist-lambda/handlers/iface"
+	"github.com/mount-joy/thelist-lambda/handlers/patchitem"
 )
 
-// Router - interface for routing requests to the right handler
-type Router interface {
-	Route(events.APIGatewayV2HTTPRequest) (interface{}, int)
-}
-
-// RouteHandler - interface for matching and handling a particular request
-type RouteHandler interface {
-	match(events.APIGatewayV2HTTPRequest) bool
-	handle(events.APIGatewayV2HTTPRequest) (interface{}, int)
-}
-
 type router struct {
-	routes []RouteHandler
+	routes []iface.RouteHandler
 }
 
 // NewRouter return the default implementation of Router
-func NewRouter() Router {
-	routes := []RouteHandler{
-		newHelloWorld(),
-		newGetItems(),
-		newPatchItem(),
+func NewRouter() iface.Router {
+	routes := []iface.RouteHandler{
+		getitems.New(),
+		helloworld.New(),
+		patchitem.New(),
 	}
 	return &router{routes: routes}
 }
@@ -35,8 +28,8 @@ func NewRouter() Router {
 // Route call the appropriate handler for a request based on its path
 func (r *router) Route(request events.APIGatewayV2HTTPRequest) (interface{}, int) {
 	for _, route := range r.routes {
-		if route.match(request) {
-			return route.handle(request)
+		if route.Match(request) {
+			return route.Handle(request)
 		}
 	}
 

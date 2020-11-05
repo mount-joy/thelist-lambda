@@ -1,4 +1,4 @@
-package handlers
+package getitems
 
 import (
 	"fmt"
@@ -10,24 +10,28 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/mount-joy/thelist-lambda/data"
 	"github.com/mount-joy/thelist-lambda/db"
+	"github.com/mount-joy/thelist-lambda/handlers/iface"
 )
 
 type getItems struct {
 	db db.DB
 }
 
-func newGetItems() RouteHandler {
+// New returns an instance of getItems satisfying the RouteHandler interface
+func New() iface.RouteHandler {
 	return &getItems{
 		db: db.DynamoDB(),
 	}
 }
 
-func (g *getItems) match(request events.APIGatewayV2HTTPRequest) bool {
+// Match returns true if this RouteHandler should handle this request
+func (g *getItems) Match(request events.APIGatewayV2HTTPRequest) bool {
 	var re = regexp.MustCompile(`^/lists/([\w-]+)/items/?$`)
-	return re.MatchString(request.RequestContext.HTTP.Path)
+	return request.RequestContext.HTTP.Method == "GET" && re.MatchString(request.RequestContext.HTTP.Path)
 }
 
-func (g *getItems) handle(request events.APIGatewayV2HTTPRequest) (interface{}, int) {
+// Handle handles this request and returns the response and status code
+func (g *getItems) Handle(request events.APIGatewayV2HTTPRequest) (interface{}, int) {
 	items, err := g.getItems(request.RequestContext.HTTP.Path)
 
 	if err != nil {

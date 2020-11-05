@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/mount-joy/thelist-lambda/handlers/iface"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -12,12 +13,12 @@ type mockRoute struct {
 	mock.Mock
 }
 
-func (m *mockRoute) match(request events.APIGatewayV2HTTPRequest) bool {
+func (m *mockRoute) Match(request events.APIGatewayV2HTTPRequest) bool {
 	args := m.Called(request)
 	return args.Bool(0)
 }
 
-func (m *mockRoute) handle(request events.APIGatewayV2HTTPRequest) (interface{}, int) {
+func (m *mockRoute) Handle(request events.APIGatewayV2HTTPRequest) (interface{}, int) {
 	args := m.Called(request)
 	return args.Get(0), args.Int(1)
 }
@@ -70,25 +71,25 @@ func TestRoute(t *testing.T) {
 			routeA := &mockRoute{}
 			routeA.Test(t)
 			routeA.
-				On("match", request).
+				On("Match", request).
 				Return(tt.matchResA)
 
 			routeA.
-				On("handle", request).
+				On("Handle", request).
 				Return(bodyA, 200)
 
 			routeB := &mockRoute{}
 			routeB.Test(t)
 			routeB.
-				On("match", request).
+				On("Match", request).
 				Return(tt.matchResB)
 
 			routeB.
-				On("handle", request).
+				On("Handle", request).
 				Return(bodyB, 200)
 
 			r := router{
-				routes: []RouteHandler{routeA, routeB},
+				routes: []iface.RouteHandler{routeA, routeB},
 			}
 
 			gotRes, gotStatusCode := r.Route(request)
