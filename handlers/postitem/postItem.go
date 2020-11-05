@@ -54,17 +54,17 @@ func (g *postItem) Handle(request events.APIGatewayV2HTTPRequest) (interface{}, 
 	return item, http.StatusOK
 }
 
-func getName(body string) (*string, error) {
+func getName(body string) (string, error) {
 	var item data.Item
 	err := json.Unmarshal([]byte(body), &item)
 
-	return &item.Name, err
+	return item.Name, err
 }
 
-func getListID(path string) (*string, error) {
+func getListID(path string) (string, error) {
 	parts := strings.SplitN(path, "/", 4)
 	if len(parts) < 4 {
-		return nil, fmt.Errorf("Unable to match path: %s", path)
+		return "", fmt.Errorf("Unable to match path: %s", path)
 	}
-	return &parts[2], nil
+	return parts[2], nil
 }

@@ -1,7 +1,6 @@
 package postitem
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/mount-joy/thelist-lambda/handlers/testhelpers"
@@ -106,6 +105,11 @@ func TestPostItemMatch(t *testing.T) {
 	}
 }
 
+type mockPostItem struct {
+	res *data.Item
+	err error
+}
+
 func TestPostItemHandle(t *testing.T) {
 	tests := []struct {
 		name               string
@@ -113,31 +117,23 @@ func TestPostItemHandle(t *testing.T) {
 		listID             string
 		itemName           string
 		body               string
-		output             *data.Item
-		outputErr          error
+		mockOutput         *mockPostItem
 		expectedRes        interface{}
 		expectedStatusCode int
-		shouldCallDB       bool
 	}{
 		{
 			name:               "Returns 'Internal Server Error' when the path is empty",
 			path:               "",
 			listID:             "test-list-id",
-			output:             nil,
-			outputErr:          nil,
 			expectedRes:        nil,
 			expectedStatusCode: 500,
-			shouldCallDB:       false,
 		},
 		{
 			name:               "Returns 'Internal Server Error' when the path is not in the correct format",
 			path:               "/lists/test-list-id",
 			listID:             "test-list-id",
-			output:             nil,
-			outputErr:          nil,
 			expectedRes:        nil,
 			expectedStatusCode: 500,
-			shouldCallDB:       false,
 		},
 		{
 			name:               "Returns 'OK' and results when the path matches",
@@ -145,22 +141,17 @@ func TestPostItemHandle(t *testing.T) {
 			listID:             "test-list-id",
 			itemName:           "my item",
 			body:               "{ \"Name\": \"my item\" }",
-			output:             &data.Item{Name: "ABC", ID: "888"},
-			outputErr:          nil,
+			mockOutput:         &mockPostItem{res: &data.Item{Name: "ABC", ID: "888"}, err: nil},
 			expectedRes:        &data.Item{Name: "ABC", ID: "888"},
 			expectedStatusCode: 200,
-			shouldCallDB:       true,
 		},
 		{
 			name:               "Returns 'Bad Request' when the body is empty",
 			path:               "/lists/test-list-id/items",
 			listID:             "test-list-id",
 			body:               "",
-			output:             nil,
-			outputErr:          errors.New("It went wrong"),
 			expectedRes:        nil,
 			expectedStatusCode: 400,
-			shouldCallDB:       false,
 		},
 	}
 
@@ -168,13 +159,14 @@ func TestPostItemHandle(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dbMocked := &testhelpers.MockDB{}
 			dbMocked.Test(t)
-			if tt.shouldCallDB {
-				defer dbMocked.AssertExpectations(t)
-			}
+			defer dbMocked.AssertExpectations(t)
 
-			dbMocked.
-				On("CreateItem", &tt.listID, &tt.itemName).
-				Return(tt.output, tt.outputErr)
+			if tt.mockOutput != nil {
+				dbMocked.
+					On("CreateItem", tt.listID, tt.itemName).
+					Return(tt.mockOutput.res, tt.mockOutput.err).
+					Once()
+			}
 
 			d := postItem{db: dbMocked}
 

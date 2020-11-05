@@ -8,13 +8,13 @@ import (
 	"github.com/mount-joy/thelist-lambda/data"
 )
 
-func (d *dynamoDB) CreateItem(listID *string, name *string) (*data.Item, error) {
+func (d *dynamoDB) CreateItem(listID string, name string) (*data.Item, error) {
 	itemID := d.generateID()
 
 	item := &data.Item{
-		ListID: *listID,
+		ListID: listID,
 		ID:     itemID,
-		Name:   *name,
+		Name:   name,
 	}
 	itemToInsert, err := dynamodbattribute.MarshalMap(item)
 	if err != nil {

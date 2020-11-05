@@ -18,23 +18,27 @@ func TestCreateItem(t *testing.T) {
 	itemName := "Peaches"
 	tests := []struct {
 		name           string
+		item           map[string]*dynamodb.AttributeValue
 		outputErr      error
 		expectedOutput *data.Item
 		expectedErr    error
 	}{
 		{
 			name:           "If the ID does not exists it creates the item",
+			item:           map[string]*dynamodb.AttributeValue{"Id": {S: &itemID}, "ListId": {S: &listID}, "Name": {S: &itemName}},
 			outputErr:      nil,
 			expectedOutput: &data.Item{ID: itemID, ListID: listID, Name: itemName},
 			expectedErr:    nil,
 		},
 		{
 			name:        "When db returns an error, that error is returned",
+			item:        map[string]*dynamodb.AttributeValue{"Id": {S: &itemID}, "ListId": {S: &listID}, "Name": {S: &itemName}},
 			outputErr:   errors.New("Something went wrong"),
 			expectedErr: errors.New("Something went wrong"),
 		},
 		{
 			name:        "When DB returns condition not match error, not found error is returned",
+			item:        map[string]*dynamodb.AttributeValue{"Id": {S: &itemID}, "ListId": {S: &listID}, "Name": {S: &itemName}},
 			outputErr:   awserr.New(dynamodb.ErrCodeConditionalCheckFailedException, "Bad", errors.New("Oh dear")),
 			expectedErr: ErrorIDExists,
 		},
@@ -47,11 +51,7 @@ func TestCreateItem(t *testing.T) {
 			defer dbMocked.AssertExpectations(t)
 
 			input := dynamodb.PutItemInput{
-				Item: map[string]*dynamodb.AttributeValue{
-					"Id":     {S: &itemID},
-					"ListId": {S: &listID},
-					"Name":   {S: &itemName},
-				},
+				Item:                tt.item,
 				TableName:           &tableName,
 				ConditionExpression: &conditionExpression,
 			}
@@ -61,7 +61,7 @@ func TestCreateItem(t *testing.T) {
 				Once()
 
 			d := dynamoDB{session: dbMocked, conf: testConfig, generateID: func() string { return itemID }}
-			gotRes, gotErr := d.CreateItem(&listID, &itemName)
+			gotRes, gotErr := d.CreateItem(listID, itemName)
 
 			assert.Equal(t, tt.expectedOutput, gotRes)
 			assert.Equal(t, tt.expectedErr, gotErr)

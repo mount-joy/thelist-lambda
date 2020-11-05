@@ -12,7 +12,7 @@ type MockDB struct {
 }
 
 // CreateItem mocks the DB CreateItem method
-func (m *MockDB) CreateItem(listID *string, name *string) (*data.Item, error) {
+func (m *MockDB) CreateItem(listID string, name string) (*data.Item, error) {
 	args := m.Called(listID, name)
 	return args.Get(0).(*data.Item), args.Error(1)
 }
