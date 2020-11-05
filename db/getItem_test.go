@@ -15,16 +15,16 @@ func TestGetItem(t *testing.T) {
 	name := "Cheese"
 	tableName := "items-table"
 	tests := []struct {
-		name        string
-		outputErr   error
-		output      *dynamodb.GetItemOutput
-		expectedRes *data.Item
-		expectedErr error
+		name          string
+		mockOutputErr error
+		mockOutput    *dynamodb.GetItemOutput
+		expectedRes   *data.Item
+		expectedErr   error
 	}{
 		{
-			name:      "If the item exists it is retrieved",
-			outputErr: nil,
-			output: &dynamodb.GetItemOutput{
+			name:          "If the item exists it is retrieved",
+			mockOutputErr: nil,
+			mockOutput: &dynamodb.GetItemOutput{
 				Item: map[string]*dynamodb.AttributeValue{
 					"Id":     {S: &itemID},
 					"ListId": {S: &listID},
@@ -35,11 +35,11 @@ func TestGetItem(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			name:        "When db returns an error, that error is returned",
-			outputErr:   errors.New("Something went wrong"),
-			output:      nil,
-			expectedRes: nil,
-			expectedErr: errors.New("Something went wrong"),
+			name:          "When db returns an error, that error is returned",
+			mockOutputErr: errors.New("Something went wrong"),
+			mockOutput:    nil,
+			expectedRes:   nil,
+			expectedErr:   errors.New("Something went wrong"),
 		},
 	}
 
@@ -58,7 +58,7 @@ func TestGetItem(t *testing.T) {
 			}
 			dbMocked.
 				On("GetItem", &input).
-				Return(tt.output, tt.outputErr).
+				Return(tt.mockOutput, tt.mockOutputErr).
 				Once()
 
 			d := dynamoDB{session: dbMocked, conf: testConfig}
