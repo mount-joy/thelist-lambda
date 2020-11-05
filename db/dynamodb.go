@@ -11,8 +11,9 @@ import (
 )
 
 type dynamoDB struct {
-	session dynamodbiface.DynamoDBAPI
-	conf    config.Config
+	session    dynamodbiface.DynamoDBAPI
+	conf       config.Config
+	generateID func() string
 }
 
 func createInstance() DB {
@@ -22,7 +23,11 @@ func createInstance() DB {
 	if err != nil {
 		panic(fmt.Sprintf("Failed to create dynamodb session: %s", err.Error()))
 	}
-	return &dynamoDB{session: dynamodb.New(session), conf: conf}
+	return &dynamoDB{
+		session:    dynamodb.New(session),
+		conf:       conf,
+		generateID: func() string { return generateID() },
+	}
 }
 
 var instance DB = createInstance()

@@ -11,6 +11,7 @@ import (
 	"github.com/mount-joy/thelist-lambda/handlers/helloworld"
 	"github.com/mount-joy/thelist-lambda/handlers/iface"
 	"github.com/mount-joy/thelist-lambda/handlers/patchitem"
+	"github.com/mount-joy/thelist-lambda/handlers/postitem"
 )
 
 type router struct {
@@ -23,6 +24,7 @@ func NewRouter() iface.Router {
 		deleteitem.New(),
 		getitem.New(),
 		getitems.New(),
+		postitem.New(),
 		helloworld.New(),
 		patchitem.New(),
 	}
