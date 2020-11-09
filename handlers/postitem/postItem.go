@@ -1,7 +1,6 @@
 package postitem
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -40,7 +39,7 @@ func (p *postItem) Handle(request events.APIGatewayV2HTTPRequest) (interface{}, 
 		return nil, http.StatusInternalServerError
 	}
 
-	name, err := getName(request.Body)
+	name, err := data.GetNameFieldInJson(request.Body)
 	if err != nil {
 		log.Printf("Error: %s", err.Error())
 		return nil, http.StatusBadRequest
@@ -53,13 +52,6 @@ func (p *postItem) Handle(request events.APIGatewayV2HTTPRequest) (interface{}, 
 	}
 
 	return item, http.StatusOK
-}
-
-func getName(body string) (string, error) {
-	var item data.Item
-	err := json.Unmarshal([]byte(body), &item)
-
-	return item.Name, err
 }
 
 func getListID(path string) (string, error) {

@@ -14,8 +14,6 @@ func TestUpdateItem(t *testing.T) {
 	listID := "474c2Fff7"
 	itemID := "b6cf642d"
 	newName := "Cheese"
-	tableName := "items-table"
-	conditionExpression := "attribute_exists(Id) AND attribute_exists(ListId)"
 	tests := []struct {
 		name              string
 		item              map[string]*dynamodb.AttributeValue
@@ -54,8 +52,8 @@ func TestUpdateItem(t *testing.T) {
 
 			input := dynamodb.PutItemInput{
 				Item:                tt.item,
-				TableName:           &tableName,
-				ConditionExpression: &conditionExpression,
+				TableName:           stringToPointer("items-table"),
+				ConditionExpression: stringToPointer("attribute_exists(Id) AND attribute_exists(ListId)"),
 			}
 			dbMocked.
 				On("PutItem", &input).

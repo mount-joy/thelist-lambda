@@ -39,3 +39,7 @@ var testConfig config.Config = config.Config{
 		Lists: "lists-table",
 	},
 }
+
+func stringToPointer(input string) *string {
+	return &input
+}

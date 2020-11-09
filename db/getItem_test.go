@@ -13,7 +13,6 @@ func TestGetItem(t *testing.T) {
 	listID := "474c2Fff7"
 	itemID := "b6cf642d"
 	name := "Cheese"
-	tableName := "items-table"
 	tests := []struct {
 		name          string
 		mockOutputErr error
@@ -54,7 +53,7 @@ func TestGetItem(t *testing.T) {
 					"Id":     {S: &itemID},
 					"ListId": {S: &listID},
 				},
-				TableName: &tableName,
+				TableName: stringToPointer("items-table"),
 			}
 			dbMocked.
 				On("GetItem", &input).

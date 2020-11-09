@@ -13,8 +13,6 @@ import (
 func TestCreateItem(t *testing.T) {
 	listID := "474c2Fff7"
 	itemID := "b6cf642d"
-	tableName := "items-table"
-	conditionExpression := "attribute_not_exists(Id)"
 	itemName := "Peaches"
 	tests := []struct {
 		name           string
@@ -42,6 +40,12 @@ func TestCreateItem(t *testing.T) {
 			mockOutputErr: awserr.New(dynamodb.ErrCodeConditionalCheckFailedException, "Bad", errors.New("Oh dear")),
 			expectedErr:   ErrorIDExists,
 		},
+		{
+			name:          "When DB unrecognised awserr, passon the error",
+			item:          map[string]*dynamodb.AttributeValue{"Id": {S: &itemID}, "ListId": {S: &listID}, "Name": {S: &itemName}},
+			mockOutputErr: awserr.New("uh oh", "whoops", errors.New("Oh dear")),
+			expectedErr:   awserr.New("uh oh", "whoops", errors.New("Oh dear")),
+		},
 	}
 
 	for _, tt := range tests {
@@ -52,8 +56,8 @@ func TestCreateItem(t *testing.T) {
 
 			input := dynamodb.PutItemInput{
 				Item:                tt.item,
-				TableName:           &tableName,
-				ConditionExpression: &conditionExpression,
+				TableName:           stringToPointer("items-table"),
+				ConditionExpression: stringToPointer("attribute_not_exists(Id)"),
 			}
 			dbMocked.
 				On("PutItem", &input).

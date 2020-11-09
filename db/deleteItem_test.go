@@ -12,7 +12,6 @@ import (
 func TestDeleteItem(t *testing.T) {
 	listID := "474c2Fff7"
 	itemID := "b6cf642d"
-	tableName := "items-table"
 	tests := []struct {
 		name            string
 		mockResponseErr error
@@ -46,7 +45,7 @@ func TestDeleteItem(t *testing.T) {
 					"Id":     {S: &itemID},
 					"ListId": {S: &listID},
 				},
-				TableName: &tableName,
+				TableName: stringToPointer("items-table"),
 			}
 			dbMocked.
 				On("DeleteItem", &input).

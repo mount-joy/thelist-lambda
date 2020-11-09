@@ -1,6 +1,7 @@
 package postitem
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/mount-joy/thelist-lambda/handlers/testhelpers"
@@ -144,6 +145,19 @@ func TestPostItemHandle(t *testing.T) {
 			mockOutput:         &mockPostItem{res: &data.Item{Name: "ABC", ID: "888"}, err: nil},
 			expectedRes:        &data.Item{Name: "ABC", ID: "888"},
 			expectedStatusCode: 200,
+		},
+		{
+			name:     "Returns 'internal server error' if database errors",
+			path:     "/lists/test-list-id/items/",
+			listID:   "test-list-id",
+			itemName: "my item",
+			body:     "{ \"Name\": \"my item\" }",
+			mockOutput: &mockPostItem{
+				res: &data.Item{Name: "ABC", ID: "888"},
+				err: fmt.Errorf("broken"),
+			},
+			expectedRes:        nil,
+			expectedStatusCode: 500,
 		},
 		{
 			name:               "Returns 'Bad Request' when the body is empty",
