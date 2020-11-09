@@ -41,6 +41,7 @@ func (d *dynamoDB) CreateItem(listID string, name string) (*data.Item, error) {
 		if e.Code() == dynamodb.ErrCodeConditionalCheckFailedException {
 			return nil, ErrorIDExists
 		}
+		return nil, err
 	default:
 		return nil, err
 	}
