@@ -17,6 +17,12 @@ func (m *MockDB) CreateItem(listID string, name string) (*data.Item, error) {
 	return args.Get(0).(*data.Item), args.Error(1)
 }
 
+// CreateItem mocks the DB CreateItem method
+func (m *MockDB) CreateList(listName string) (*data.List, error) {
+	args := m.Called(listName)
+	return args.Get(0).(*data.List), args.Error(1)
+}
+
 // GetItem mocks the DB GetItem method
 func (m *MockDB) GetItem(listID string, itemID string) (*data.Item, error) {
 	args := m.Called(listID, itemID)
