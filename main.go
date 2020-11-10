@@ -2,7 +2,9 @@ package main
 
 import (
 	"encoding/json"
+	"net/http"
 
+	"github.com/mount-joy/thelist-lambda/cors"
 	"github.com/mount-joy/thelist-lambda/handlers"
 	"github.com/mount-joy/thelist-lambda/handlers/iface"
 
@@ -11,10 +13,22 @@ import (
 )
 
 type handler struct {
-	router iface.Router
+	router         iface.Router
+	allowedDomains cors.OriginChecker
 }
 
 func (h *handler) doRequest(request events.APIGatewayV2HTTPRequest) (events.APIGatewayV2HTTPResponse, error) {
+	if cors.IsOptionsRequest(request) {
+		return h.allowedDomains.Options(request), nil
+	}
+
+	responseHeaders, allowed := h.allowedDomains.GetCorsHeaders(request)
+	if !allowed {
+		return events.APIGatewayV2HTTPResponse{
+			StatusCode: http.StatusForbidden,
+		}, nil
+	}
+
 	result, statusCode := h.router.Route(request)
 
 	res, err := json.Marshal(result)
@@ -28,12 +42,14 @@ func (h *handler) doRequest(request events.APIGatewayV2HTTPRequest) (events.APIG
 	return events.APIGatewayV2HTTPResponse{
 		Body:       string(res),
 		StatusCode: statusCode,
+		Headers:    responseHeaders,
 	}, nil
 }
 
 func main() {
 	h := handler{
-		router: handlers.NewRouter(),
+		router:         handlers.NewRouter(),
+		allowedDomains: cors.NewOriginChecker(),
 	}
 
 	lambda.Start(h.doRequest)
