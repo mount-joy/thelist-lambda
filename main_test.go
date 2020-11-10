@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/mount-joy/thelist-lambda/cors"
 	"github.com/mount-joy/thelist-lambda/handlers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -21,13 +22,16 @@ func TestFullFlow(t *testing.T) {
 		defer ts.Close()
 
 		h := handler{
-			router: handlers.NewRouter(),
+			router:         handlers.NewRouter(),
+			allowedDomains: cors.NewOriginChecker(),
 		}
 
 		request := events.APIGatewayV2HTTPRequest{
+			Headers: map[string]string{"Origin": "thelist.app"},
 			RequestContext: events.APIGatewayV2HTTPRequestContext{
 				HTTP: events.APIGatewayV2HTTPRequestContextHTTPDescription{
-					Path: "/hello",
+					Method: "GET",
+					Path:   "/hello",
 				},
 			},
 			QueryStringParameters: map[string]string{"name": "Joy"},
@@ -50,18 +54,42 @@ func (mr *mockRouter) Route(request events.APIGatewayV2HTTPRequest) (interface{}
 	return args.Get(0), args.Int(1)
 }
 
+type mockOriginChecker struct {
+	mock.Mock
+}
+
+func (mcd *mockOriginChecker) Options(request events.APIGatewayV2HTTPRequest) events.APIGatewayV2HTTPResponse {
+	args := mcd.Called(request)
+	return args.Get(0).(events.APIGatewayV2HTTPResponse)
+}
+
+func (mcd *mockOriginChecker) GetCorsHeaders(request events.APIGatewayV2HTTPRequest) (map[string]string, bool) {
+	args := mcd.Called(request)
+	return args.Get(0).(map[string]string), args.Bool(1)
+}
+
 func TestHandler(t *testing.T) {
 	type mockRoute struct {
 		body   interface{}
 		status int
 	}
+	type mockOptions struct {
+		response events.APIGatewayV2HTTPResponse
+	}
+	type mockGetCorsHeaders struct {
+		headers map[string]string
+		allowed bool
+	}
 	tests := []struct {
-		name           string
-		request        events.APIGatewayV2HTTPRequest
-		mockRoute      mockRoute
-		expectedBody   string
-		expectedStatus int
-		expectedErr    error
+		name               string
+		request            events.APIGatewayV2HTTPRequest
+		mockOptions        *mockOptions
+		mockGetCorsHeaders *mockGetCorsHeaders
+		mockRoute          *mockRoute
+		expectedBody       string
+		expectedStatus     int
+		expectedHeaders    map[string]string
+		expectedErr        error
 	}{
 		{
 			name: "Router doesn't error",
@@ -72,7 +100,8 @@ func TestHandler(t *testing.T) {
 					},
 				},
 			},
-			mockRoute: mockRoute{
+			mockGetCorsHeaders: &mockGetCorsHeaders{allowed: true},
+			mockRoute: &mockRoute{
 				body:   map[string]string{"message": "huge success"},
 				status: 200,
 			},
@@ -88,12 +117,84 @@ func TestHandler(t *testing.T) {
 					},
 				},
 			},
-			mockRoute: mockRoute{
+			mockGetCorsHeaders: &mockGetCorsHeaders{allowed: true},
+			mockRoute: &mockRoute{
 				body:   nil,
 				status: 203,
 			},
 			expectedStatus: 203,
 			expectedBody:   "null",
+		},
+		{
+			name: "Sets Access-Control-Allow-Origin when Origin Header is set",
+			request: events.APIGatewayV2HTTPRequest{
+				Headers: map[string]string{"Origin": "test-place"},
+				RequestContext: events.APIGatewayV2HTTPRequestContext{
+					HTTP: events.APIGatewayV2HTTPRequestContextHTTPDescription{
+						Path:   "/test",
+						Method: "GET",
+					},
+				},
+			},
+			mockGetCorsHeaders: &mockGetCorsHeaders{
+				headers: map[string]string{
+					"Access-Control-Allow-Origin": "test-place",
+				},
+				allowed: true,
+			},
+			mockRoute: &mockRoute{
+				body:   map[string]string{"message": "huge success"},
+				status: 200,
+			},
+			expectedBody:   "{\"message\":\"huge success\"}",
+			expectedStatus: 200,
+			expectedHeaders: map[string]string{
+				"Access-Control-Allow-Origin": "test-place",
+			},
+		},
+		{
+			name: "If origin isn't allowed, 403",
+			request: events.APIGatewayV2HTTPRequest{
+				Headers: map[string]string{"Origin": "some-not-allowed-domain"},
+				RequestContext: events.APIGatewayV2HTTPRequestContext{
+					HTTP: events.APIGatewayV2HTTPRequestContextHTTPDescription{
+						Path:   "/test",
+						Method: "GET",
+					},
+				},
+			},
+			mockGetCorsHeaders: &mockGetCorsHeaders{
+				headers: map[string]string{
+					"Access-Control-Allow-Origin": "some-not-allowed-domain",
+				},
+				allowed: false,
+			},
+			expectedStatus: 403,
+		},
+		{
+			name: "OPTIONS request for allowed domain returns methods",
+			request: events.APIGatewayV2HTTPRequest{
+				Headers: map[string]string{"Origin": "test-place"},
+				RequestContext: events.APIGatewayV2HTTPRequestContext{
+					HTTP: events.APIGatewayV2HTTPRequestContextHTTPDescription{
+						Method: "OPTIONS",
+					},
+				},
+			},
+			mockOptions: &mockOptions{
+				response: events.APIGatewayV2HTTPResponse{
+					Headers: map[string]string{
+						"Access-Control-Allow-Methods": "DELETE, GET, PATCH, POST",
+						"Access-Control-Allow-Origin":  "test-place",
+					},
+					StatusCode: 204,
+				},
+			},
+			expectedHeaders: map[string]string{
+				"Access-Control-Allow-Methods": "DELETE, GET, PATCH, POST",
+				"Access-Control-Allow-Origin":  "test-place",
+			},
+			expectedStatus: 204,
 		},
 	}
 	for _, tt := range tests {
@@ -101,13 +202,30 @@ func TestHandler(t *testing.T) {
 			router := &mockRouter{}
 			router.Test(t)
 			defer router.AssertExpectations(t)
-			router.
-				On("Route", tt.request).
-				Return(tt.mockRoute.body, tt.mockRoute.status).
-				Once()
+			if tt.mockRoute != nil {
+				router.
+					On("Route", tt.request).
+					Return(tt.mockRoute.body, tt.mockRoute.status).
+					Once()
+			}
+
+			originChecker := &mockOriginChecker{}
+			originChecker.Test(t)
+			defer originChecker.AssertExpectations(t)
+			if tt.mockOptions != nil {
+				originChecker.On("Options", tt.request).
+					Return(tt.mockOptions.response).
+					Once()
+			}
+			if tt.mockGetCorsHeaders != nil {
+				originChecker.On("GetCorsHeaders", tt.request).
+					Return(tt.mockGetCorsHeaders.headers, tt.mockGetCorsHeaders.allowed).
+					Once()
+			}
 
 			h := handler{
-				router: router,
+				router:         router,
+				allowedDomains: originChecker,
 			}
 
 			gotRes, gotErr := h.doRequest(tt.request)
@@ -115,6 +233,7 @@ func TestHandler(t *testing.T) {
 			assert.Equal(t, tt.expectedErr, gotErr)
 			assert.Equal(t, tt.expectedBody, gotRes.Body)
 			assert.Equal(t, tt.expectedStatus, gotRes.StatusCode)
+			assert.Equal(t, tt.expectedHeaders, gotRes.Headers)
 		})
 	}
 }
