@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"net/http"
 
 	"github.com/mount-joy/thelist-lambda/cors"
 	"github.com/mount-joy/thelist-lambda/handlers"
@@ -22,12 +21,7 @@ func (h *handler) doRequest(request events.APIGatewayV2HTTPRequest) (events.APIG
 		return h.allowedDomains.Options(request), nil
 	}
 
-	responseHeaders, allowed := h.allowedDomains.GetCorsHeaders(request)
-	if !allowed {
-		return events.APIGatewayV2HTTPResponse{
-			StatusCode: http.StatusForbidden,
-		}, nil
-	}
+	responseHeaders := h.allowedDomains.GetCorsHeaders(request)
 
 	result, statusCode := h.router.Route(request)
 

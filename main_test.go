@@ -63,9 +63,9 @@ func (mcd *mockOriginChecker) Options(request events.APIGatewayV2HTTPRequest) ev
 	return args.Get(0).(events.APIGatewayV2HTTPResponse)
 }
 
-func (mcd *mockOriginChecker) GetCorsHeaders(request events.APIGatewayV2HTTPRequest) (map[string]string, bool) {
+func (mcd *mockOriginChecker) GetCorsHeaders(request events.APIGatewayV2HTTPRequest) map[string]string {
 	args := mcd.Called(request)
-	return args.Get(0).(map[string]string), args.Bool(1)
+	return args.Get(0).(map[string]string)
 }
 
 func TestHandler(t *testing.T) {
@@ -78,7 +78,6 @@ func TestHandler(t *testing.T) {
 	}
 	type mockGetCorsHeaders struct {
 		headers map[string]string
-		allowed bool
 	}
 	tests := []struct {
 		name               string
@@ -100,7 +99,7 @@ func TestHandler(t *testing.T) {
 					},
 				},
 			},
-			mockGetCorsHeaders: &mockGetCorsHeaders{allowed: true},
+			mockGetCorsHeaders: &mockGetCorsHeaders{},
 			mockRoute: &mockRoute{
 				body:   map[string]string{"message": "huge success"},
 				status: 200,
@@ -117,7 +116,7 @@ func TestHandler(t *testing.T) {
 					},
 				},
 			},
-			mockGetCorsHeaders: &mockGetCorsHeaders{allowed: true},
+			mockGetCorsHeaders: &mockGetCorsHeaders{},
 			mockRoute: &mockRoute{
 				body:   nil,
 				status: 203,
@@ -140,7 +139,6 @@ func TestHandler(t *testing.T) {
 				headers: map[string]string{
 					"Access-Control-Allow-Origin": "test-place",
 				},
-				allowed: true,
 			},
 			mockRoute: &mockRoute{
 				body:   map[string]string{"message": "huge success"},
@@ -153,7 +151,7 @@ func TestHandler(t *testing.T) {
 			},
 		},
 		{
-			name: "If origin isn't allowed, 403",
+			name: "If origin isn't allowed, don't add cors headers",
 			request: events.APIGatewayV2HTTPRequest{
 				Headers: map[string]string{"Origin": "some-not-allowed-domain"},
 				RequestContext: events.APIGatewayV2HTTPRequestContext{
@@ -164,12 +162,15 @@ func TestHandler(t *testing.T) {
 				},
 			},
 			mockGetCorsHeaders: &mockGetCorsHeaders{
-				headers: map[string]string{
-					"Access-Control-Allow-Origin": "some-not-allowed-domain",
-				},
-				allowed: false,
+				headers: nil,
 			},
-			expectedStatus: 403,
+			mockRoute: &mockRoute{
+				body:   map[string]string{"message": "huge success"},
+				status: 200,
+			},
+			expectedBody:    "{\"message\":\"huge success\"}",
+			expectedStatus:  200,
+			expectedHeaders: nil,
 		},
 		{
 			name: "OPTIONS request for allowed domain returns methods",
@@ -219,7 +220,7 @@ func TestHandler(t *testing.T) {
 			}
 			if tt.mockGetCorsHeaders != nil {
 				originChecker.On("GetCorsHeaders", tt.request).
-					Return(tt.mockGetCorsHeaders.headers, tt.mockGetCorsHeaders.allowed).
+					Return(tt.mockGetCorsHeaders.headers).
 					Once()
 			}
 

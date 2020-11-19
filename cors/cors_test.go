@@ -14,19 +14,19 @@ func Test_keysToString(t *testing.T) {
 		name                   string
 		input                  map[string]bool
 		expectOutputToContain  []string
-		expectedNUmberOfCommas int
+		expectedNumberOfCommas int
 	}{
 		{
 			name:                   "empty map returns empty string",
 			input:                  nil,
 			expectOutputToContain:  nil,
-			expectedNUmberOfCommas: 0,
+			expectedNumberOfCommas: 0,
 		},
 		{
 			name:                   "add key from map to string in output",
 			input:                  map[string]bool{"hello": true},
 			expectOutputToContain:  []string{"hello"},
-			expectedNUmberOfCommas: 0,
+			expectedNumberOfCommas: 0,
 		},
 		{
 			name: "All true map is returned in string",
@@ -36,7 +36,7 @@ func Test_keysToString(t *testing.T) {
 				"builder": true,
 			},
 			expectOutputToContain:  []string{"bob", "the", "builder"},
-			expectedNUmberOfCommas: 2,
+			expectedNumberOfCommas: 2,
 		},
 		{
 			name: "Only return keys with value true",
@@ -46,18 +46,22 @@ func Test_keysToString(t *testing.T) {
 				"builder": true,
 			},
 			expectOutputToContain:  []string{"bob", "builder"},
-			expectedNUmberOfCommas: 1,
+			expectedNumberOfCommas: 1,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := commaSeperateTrueKeys(tt.input)
 
+			var expectedStringLenth int
 			for _, want := range tt.expectOutputToContain {
 				assert.Contains(t, got, want)
+				expectedStringLenth += len(want)
 			}
+			expectedStringLenth += tt.expectedNumberOfCommas * 2
 			numberOfCommas := strings.Count(got, ", ")
-			assert.Equal(t, tt.expectedNUmberOfCommas, numberOfCommas, "actual output was: %q", got)
+			assert.Equal(t, tt.expectedNumberOfCommas, numberOfCommas, "actual output was: %q", got)
+			assert.Equal(t, expectedStringLenth, len(got), "actual string was: %q", got)
 		})
 	}
 }
@@ -228,6 +232,24 @@ func TestDomains_Options(t *testing.T) {
 				Headers: map[string]string{
 					"Access-Control-Allow-Origin":  "hello",
 					"Access-Control-Allow-Methods": "GET",
+					"Access-Control-Max-Age":       "600",
+					"Access-Control-Allow-Headers": "content-type",
+				},
+			},
+		},
+		{
+			name: "origin can be any case",
+			allowedDomains: map[string]map[string]bool{
+				"hello": {"GET": true},
+			},
+			headers: map[string]string{"oRIGIN": "hello"},
+			want: events.APIGatewayV2HTTPResponse{
+				StatusCode: 204,
+				Headers: map[string]string{
+					"Access-Control-Allow-Origin":  "hello",
+					"Access-Control-Allow-Methods": "GET",
+					"Access-Control-Max-Age":       "600",
+					"Access-Control-Allow-Headers": "content-type",
 				},
 			},
 		},
@@ -242,6 +264,8 @@ func TestDomains_Options(t *testing.T) {
 				Headers: map[string]string{
 					"Access-Control-Allow-Origin":  "hello",
 					"Access-Control-Allow-Methods": "GET",
+					"Access-Control-Max-Age":       "600",
+					"Access-Control-Allow-Headers": "content-type",
 				},
 			},
 		},
@@ -266,6 +290,8 @@ func TestDomains_Options(t *testing.T) {
 				Headers: map[string]string{
 					"Access-Control-Allow-Origin":  "https://hello",
 					"Access-Control-Allow-Methods": "GET",
+					"Access-Control-Max-Age":       "600",
+					"Access-Control-Allow-Headers": "content-type",
 				},
 			},
 		},
@@ -293,11 +319,10 @@ func TestDomains_GetCorsHeaders(t *testing.T) {
 		origin          string
 		method          string
 		expectedHeaders map[string]string
-		expectedAllowed bool
 	}{
 		{
-			name:            "origin header not set, allowed",
-			expectedAllowed: true,
+			name:            "origin header not set on request, return nil",
+			expectedHeaders: nil,
 		},
 		{
 			name: "origin is allowed",
@@ -307,9 +332,10 @@ func TestDomains_GetCorsHeaders(t *testing.T) {
 			origin: "our-origin",
 			method: "GET",
 			expectedHeaders: map[string]string{
-				"Access-Control-Allow-Origin": "our-origin",
+				"Access-Control-Allow-Origin":  "our-origin",
+				"Access-Control-Max-Age":       "600",
+				"Access-Control-Allow-Headers": "content-type",
 			},
-			expectedAllowed: true,
 		},
 		{
 			name: "origin still allowed with https:// prefix",
@@ -319,18 +345,19 @@ func TestDomains_GetCorsHeaders(t *testing.T) {
 			origin: "https://our-origin",
 			method: "GET",
 			expectedHeaders: map[string]string{
-				"Access-Control-Allow-Origin": "https://our-origin",
+				"Access-Control-Allow-Origin":  "https://our-origin",
+				"Access-Control-Max-Age":       "600",
+				"Access-Control-Allow-Headers": "content-type",
 			},
-			expectedAllowed: true,
 		},
 		{
-			name: "not allowed origin returns false",
+			name: "not allowed origin, no header on response",
 			allowedDomains: map[string]map[string]bool{
 				"our-origin": {"GET": true},
 			},
 			origin:          "not-ours-m8",
 			method:          "GET",
-			expectedAllowed: false,
+			expectedHeaders: nil,
 		},
 	}
 	for _, tt := range tests {
@@ -345,10 +372,9 @@ func TestDomains_GetCorsHeaders(t *testing.T) {
 				request.Headers["Origin"] = tt.origin
 			}
 
-			gotHeaders, gotAllowed := d.GetCorsHeaders(request)
+			gotHeaders := d.GetCorsHeaders(request)
 
 			assert.Equal(t, tt.expectedHeaders, gotHeaders)
-			assert.Equal(t, tt.expectedAllowed, gotAllowed)
 		})
 	}
 }
