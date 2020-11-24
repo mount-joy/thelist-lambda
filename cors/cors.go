@@ -24,6 +24,7 @@ type Domains struct {
 func NewOriginChecker() OriginChecker {
 	acceptedDomains := map[string]map[string]bool{
 		"thelist.app":    {http.MethodDelete: true, http.MethodGet: true, http.MethodPatch: true, http.MethodPost: true},
+		"dev.thelist.app": {http.MethodDelete: true, http.MethodGet: true, http.MethodPatch: true, http.MethodPost: true},
 		"localhost:3000": {http.MethodDelete: true, http.MethodGet: true, http.MethodPatch: true, http.MethodPost: true},
 	}
 	return &Domains{Allowed: acceptedDomains}
