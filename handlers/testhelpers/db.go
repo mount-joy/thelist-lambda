@@ -28,6 +28,12 @@ func (m *MockDB) GetItem(listID string, itemID string) (*data.Item, error) {
 	return args.Get(0).(*data.Item), args.Error(1)
 }
 
+// GetList mocks the DB GetItem method
+func (m *MockDB) GetList(listID string) (*data.List, error) {
+	args := m.Called(listID)
+	return args.Get(0).(*data.List), args.Error(1)
+}
+
 // DeleteItem mocks the DB DeleteItem method
 func (m *MockDB) DeleteItem(listID string, itemID string) error {
 	args := m.Called(listID, itemID)

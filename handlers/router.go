@@ -8,6 +8,7 @@ import (
 	"github.com/mount-joy/thelist-lambda/handlers/deleteitem"
 	"github.com/mount-joy/thelist-lambda/handlers/getitem"
 	"github.com/mount-joy/thelist-lambda/handlers/getitems"
+	"github.com/mount-joy/thelist-lambda/handlers/getlist"
 	"github.com/mount-joy/thelist-lambda/handlers/helloworld"
 	"github.com/mount-joy/thelist-lambda/handlers/iface"
 	"github.com/mount-joy/thelist-lambda/handlers/patchitem"
@@ -25,6 +26,7 @@ func NewRouter() iface.Router {
 		deleteitem.New(),
 		getitem.New(),
 		getitems.New(),
+		getlist.New(),
 		postitem.New(),
 		postlist.New(),
 		helloworld.New(),
