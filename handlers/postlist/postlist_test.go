@@ -108,10 +108,10 @@ func TestPostListHandle(t *testing.T) {
 			name:     "Returns 'OK' if database succeeds",
 			listName: "myeList",
 			mockPostList: &mockPostList{
-				res: &data.List{Name: "myList", ID: "1234"},
+				res: &data.List{Name: "myList", ListKey: data.ListKey{ID: "1234"}},
 				err: nil,
 			},
-			expectedRes:        &data.List{Name: "myList", ID: "1234"},
+			expectedRes:        &data.List{Name: "myList", ListKey: data.ListKey{ID: "1234"}},
 			expectedStatusCode: 200,
 		},
 		{

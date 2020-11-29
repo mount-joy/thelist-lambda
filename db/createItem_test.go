@@ -14,6 +14,7 @@ func TestCreateItem(t *testing.T) {
 	listID := "474c2Fff7"
 	itemID := "b6cf642d"
 	itemName := "Peaches"
+	isCompleted := false
 	tests := []struct {
 		name           string
 		item           map[string]*dynamodb.AttributeValue
@@ -23,26 +24,26 @@ func TestCreateItem(t *testing.T) {
 	}{
 		{
 			name:           "If the ID does not exists it creates the item",
-			item:           map[string]*dynamodb.AttributeValue{"Id": {S: &itemID}, "ListId": {S: &listID}, "Name": {S: &itemName}},
+			item:           map[string]*dynamodb.AttributeValue{"Id": {S: &itemID}, "ListId": {S: &listID}, "Name": {S: &itemName}, "IsCompleted": {BOOL: &isCompleted}},
 			mockOutputErr:  nil,
-			expectedOutput: &data.Item{ID: itemID, ListID: listID, Name: itemName},
+			expectedOutput: &data.Item{ItemKey: data.ItemKey{ID: itemID, ListID: listID}, Name: itemName, IsCompleted: isCompleted},
 			expectedErr:    nil,
 		},
 		{
 			name:          "When db returns an error, that error is returned",
-			item:          map[string]*dynamodb.AttributeValue{"Id": {S: &itemID}, "ListId": {S: &listID}, "Name": {S: &itemName}},
+			item:          map[string]*dynamodb.AttributeValue{"Id": {S: &itemID}, "ListId": {S: &listID}, "Name": {S: &itemName}, "IsCompleted": {BOOL: &isCompleted}},
 			mockOutputErr: errors.New("Something went wrong"),
 			expectedErr:   errors.New("Something went wrong"),
 		},
 		{
 			name:          "When DB returns condition not match error, not found error is returned",
-			item:          map[string]*dynamodb.AttributeValue{"Id": {S: &itemID}, "ListId": {S: &listID}, "Name": {S: &itemName}},
+			item:          map[string]*dynamodb.AttributeValue{"Id": {S: &itemID}, "ListId": {S: &listID}, "Name": {S: &itemName}, "IsCompleted": {BOOL: &isCompleted}},
 			mockOutputErr: awserr.New(dynamodb.ErrCodeConditionalCheckFailedException, "Bad", errors.New("Oh dear")),
 			expectedErr:   ErrorIDExists,
 		},
 		{
 			name:          "When DB unrecognised awserr, passon the error",
-			item:          map[string]*dynamodb.AttributeValue{"Id": {S: &itemID}, "ListId": {S: &listID}, "Name": {S: &itemName}},
+			item:          map[string]*dynamodb.AttributeValue{"Id": {S: &itemID}, "ListId": {S: &listID}, "Name": {S: &itemName}, "IsCompleted": {BOOL: &isCompleted}},
 			mockOutputErr: awserr.New("uh oh", "whoops", errors.New("Oh dear")),
 			expectedErr:   awserr.New("uh oh", "whoops", errors.New("Oh dear")),
 		},

@@ -30,7 +30,7 @@ func TestGetItem(t *testing.T) {
 					"Name":   {S: &name},
 				},
 			},
-			expectedRes: &data.Item{ID: itemID, ListID: listID, Name: name},
+			expectedRes: &data.Item{ItemKey: data.ItemKey{ID: itemID, ListID: listID}, Name: name},
 			expectedErr: nil,
 		},
 		{
