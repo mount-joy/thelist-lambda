@@ -10,14 +10,17 @@ import (
 
 func (d *dynamoDB) CreateItem(listID string, name string) (*data.Item, error) {
 	itemID := d.generateID()
+	timestamp := d.getTimestamp()
 
 	item := &data.Item{
 		ItemKey: data.ItemKey{
 			ListID: listID,
 			ID:     itemID,
 		},
-		Name:        name,
-		IsCompleted: false,
+		Name:             name,
+		IsCompleted:      false,
+		CreatedTimestamp: timestamp,
+		UpdatedTimestamp: timestamp,
 	}
 	itemToInsert, err := dynamodbattribute.MarshalMap(item)
 	if err != nil {

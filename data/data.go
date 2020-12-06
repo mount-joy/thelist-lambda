@@ -13,7 +13,9 @@ type ListKey struct {
 // List represents the data structure of a list
 type List struct {
 	ListKey
-	Name string `json:"Name"`
+	Name             string `json:"Name"`
+	CreatedTimestamp string `json:"Created"`
+	UpdatedTimestamp string `json:"Updated"`
 }
 
 // ItemKey represents the primary key of an item
@@ -25,8 +27,10 @@ type ItemKey struct {
 // Item represents the data structure of an item on a list
 type Item struct {
 	ItemKey
-	Name        string `json:"Name"`
-	IsCompleted bool   `json:"IsCompleted"`
+	Name             string `json:"Name"`
+	IsCompleted      bool   `json:"IsCompleted"`
+	CreatedTimestamp string `json:"Created"`
+	UpdatedTimestamp string `json:"Updated"`
 }
 
 // GetNameFieldInJson gets the value of "Name" from the passed in json

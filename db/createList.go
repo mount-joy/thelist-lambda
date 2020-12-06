@@ -9,11 +9,15 @@ import (
 )
 
 func (d *dynamoDB) CreateList(listName string) (*data.List, error) {
+	timestamp := d.getTimestamp()
+
 	list := &data.List{
 		ListKey: data.ListKey{
 			ID: d.generateID(),
 		},
-		Name: listName,
+		Name:             listName,
+		CreatedTimestamp: timestamp,
+		UpdatedTimestamp: timestamp,
 	}
 
 	listToInsert, err := dynamodbattribute.MarshalMap(list)

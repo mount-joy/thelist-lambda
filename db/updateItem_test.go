@@ -14,6 +14,7 @@ func TestUpdateItem(t *testing.T) {
 	listID := "474c2Fff7"
 	itemID := "b6cf642d"
 	newName := "Cheese"
+	timestamp := "2020-01-23T09:59:14.9396531Z"
 
 	tests := []struct {
 		testName                         string
@@ -34,8 +35,8 @@ func TestUpdateItem(t *testing.T) {
 			isCompleted:                      boolToPointer(true),
 			mockedResponse:                   updateItemOutput(listID, itemID, newName, true),
 			mockedErrResponse:                nil,
-			expectedUpdateExpression:         stringToPointer("SET IsCompleted = :c, #n = :n"),
-			expectedFieldsToUpdate:           updateBothFields(newName, true),
+			expectedUpdateExpression:         stringToPointer("SET IsCompleted = :c, #n = :n, Updated = :t"),
+			expectedFieldsToUpdate:           updateBothFields(newName, true, timestamp),
 			expectedKey:                      map[string]*dynamodb.AttributeValue{"Id": {S: &itemID}, "ListId": {S: &listID}},
 			expectedExpressionAttributeNames: map[string]*string{"#n": stringToPointer("Name")},
 			expectedRes:                      &data.Item{ItemKey: data.ItemKey{ID: itemID, ListID: listID}, Name: newName, IsCompleted: true},
@@ -47,8 +48,8 @@ func TestUpdateItem(t *testing.T) {
 			isCompleted:                      nil,
 			mockedResponse:                   updateItemOutput(listID, itemID, newName, false),
 			mockedErrResponse:                nil,
-			expectedUpdateExpression:         stringToPointer("SET #n = :n"),
-			expectedFieldsToUpdate:           updateName(newName),
+			expectedUpdateExpression:         stringToPointer("SET #n = :n, Updated = :t"),
+			expectedFieldsToUpdate:           updateName(newName, timestamp),
 			expectedKey:                      map[string]*dynamodb.AttributeValue{"Id": {S: &itemID}, "ListId": {S: &listID}},
 			expectedExpressionAttributeNames: map[string]*string{"#n": stringToPointer("Name")},
 			expectedRes:                      &data.Item{ItemKey: data.ItemKey{ID: itemID, ListID: listID}, Name: newName, IsCompleted: false},
@@ -60,8 +61,8 @@ func TestUpdateItem(t *testing.T) {
 			isCompleted:                      boolToPointer(true),
 			mockedResponse:                   updateItemOutput(listID, itemID, newName, true),
 			mockedErrResponse:                nil,
-			expectedUpdateExpression:         stringToPointer("SET IsCompleted = :c"),
-			expectedFieldsToUpdate:           updateIsCompleted(true),
+			expectedUpdateExpression:         stringToPointer("SET IsCompleted = :c, Updated = :t"),
+			expectedFieldsToUpdate:           updateIsCompleted(true, timestamp),
 			expectedKey:                      map[string]*dynamodb.AttributeValue{"Id": {S: &itemID}, "ListId": {S: &listID}},
 			expectedExpressionAttributeNames: nil,
 			expectedRes:                      &data.Item{ItemKey: data.ItemKey{ID: itemID, ListID: listID}, Name: newName, IsCompleted: true},
@@ -73,8 +74,8 @@ func TestUpdateItem(t *testing.T) {
 			isCompleted:                      boolToPointer(true),
 			mockedResponse:                   nil,
 			mockedErrResponse:                errors.New("Something went wrong"),
-			expectedUpdateExpression:         stringToPointer("SET IsCompleted = :c, #n = :n"),
-			expectedFieldsToUpdate:           updateBothFields(newName, true),
+			expectedUpdateExpression:         stringToPointer("SET IsCompleted = :c, #n = :n, Updated = :t"),
+			expectedFieldsToUpdate:           updateBothFields(newName, true, timestamp),
 			expectedKey:                      map[string]*dynamodb.AttributeValue{"Id": {S: &itemID}, "ListId": {S: &listID}},
 			expectedExpressionAttributeNames: map[string]*string{"#n": stringToPointer("Name")},
 			expectedRes:                      nil,
@@ -86,22 +87,23 @@ func TestUpdateItem(t *testing.T) {
 			isCompleted:                      boolToPointer(true),
 			mockedResponse:                   nil,
 			mockedErrResponse:                awserr.New(dynamodb.ErrCodeConditionalCheckFailedException, "Bad", errors.New("Oh dear")),
-			expectedUpdateExpression:         stringToPointer("SET IsCompleted = :c, #n = :n"),
-			expectedFieldsToUpdate:           updateBothFields(newName, true),
+			expectedUpdateExpression:         stringToPointer("SET IsCompleted = :c, #n = :n, Updated = :t"),
+			expectedFieldsToUpdate:           updateBothFields(newName, true, timestamp),
 			expectedKey:                      map[string]*dynamodb.AttributeValue{"Id": {S: &itemID}, "ListId": {S: &listID}},
 			expectedExpressionAttributeNames: map[string]*string{"#n": stringToPointer("Name")},
 			expectedRes:                      nil,
 			expectedErr:                      ErrorNotFound,
 		},
 		{
-			testName:               "If the update request is invalid, BadRequest is returned",
-			newName:                "",
-			mockedResponse:         nil,
-			mockedErrResponse:      awserr.New("ValidationException", "Bad", errors.New("Oh dear")),
-			expectedFieldsToUpdate: map[string]*dynamodb.AttributeValue{},
-			expectedKey:            map[string]*dynamodb.AttributeValue{"Id": {S: &itemID}, "ListId": {S: &listID}},
-			expectedRes:            nil,
-			expectedErr:            ErrorBadRequest,
+			testName:                 "If the update request is invalid, BadRequest is returned",
+			newName:                  "",
+			mockedResponse:           nil,
+			mockedErrResponse:        awserr.New("ValidationException", "Bad", errors.New("Oh dear")),
+			expectedUpdateExpression: stringToPointer("SET Updated = :t"),
+			expectedFieldsToUpdate:   map[string]*dynamodb.AttributeValue{":t": &dynamodb.AttributeValue{S: &timestamp}},
+			expectedKey:              map[string]*dynamodb.AttributeValue{"Id": {S: &itemID}, "ListId": {S: &listID}},
+			expectedRes:              nil,
+			expectedErr:              ErrorBadRequest,
 		},
 		{
 			testName:                         "If another AWS error is returned that error message is passed on",
@@ -109,8 +111,8 @@ func TestUpdateItem(t *testing.T) {
 			isCompleted:                      boolToPointer(true),
 			mockedResponse:                   nil,
 			mockedErrResponse:                awserr.New("Oops", "Bad", errors.New("Oh dear")),
-			expectedUpdateExpression:         stringToPointer("SET IsCompleted = :c, #n = :n"),
-			expectedFieldsToUpdate:           updateBothFields(newName, true),
+			expectedUpdateExpression:         stringToPointer("SET IsCompleted = :c, #n = :n, Updated = :t"),
+			expectedFieldsToUpdate:           updateBothFields(newName, true, timestamp),
 			expectedKey:                      map[string]*dynamodb.AttributeValue{"Id": {S: &itemID}, "ListId": {S: &listID}},
 			expectedExpressionAttributeNames: map[string]*string{"#n": stringToPointer("Name")},
 			expectedRes:                      nil,
@@ -138,7 +140,7 @@ func TestUpdateItem(t *testing.T) {
 				Return(tt.mockedResponse, tt.mockedErrResponse).
 				Once()
 
-			d := dynamoDB{session: dbMocked, conf: testConfig}
+			d := dynamoDB{session: dbMocked, conf: testConfig, getTimestamp: func() string { return timestamp }}
 			gotRes, gotErr := d.UpdateItem(listID, itemID, tt.newName, tt.isCompleted)
 
 			assert.Equal(t, tt.expectedErr, gotErr)
@@ -166,21 +168,24 @@ func updateItemOutput(listID string, itemID string, name string, isCompleted boo
 	}
 }
 
-func updateBothFields(name string, isCompleted bool) map[string]*dynamodb.AttributeValue {
+func updateBothFields(name string, isCompleted bool, timestamp string) map[string]*dynamodb.AttributeValue {
 	return map[string]*dynamodb.AttributeValue{
 		":c": &dynamodb.AttributeValue{BOOL: &isCompleted},
 		":n": &dynamodb.AttributeValue{S: &name},
+		":t": &dynamodb.AttributeValue{S: &timestamp},
 	}
 }
 
-func updateName(name string) map[string]*dynamodb.AttributeValue {
+func updateName(name string, timestamp string) map[string]*dynamodb.AttributeValue {
 	return map[string]*dynamodb.AttributeValue{
 		":n": &dynamodb.AttributeValue{S: &name},
+		":t": &dynamodb.AttributeValue{S: &timestamp},
 	}
 }
 
-func updateIsCompleted(isCompleted bool) map[string]*dynamodb.AttributeValue {
+func updateIsCompleted(isCompleted bool, timestamp string) map[string]*dynamodb.AttributeValue {
 	return map[string]*dynamodb.AttributeValue{
 		":c": &dynamodb.AttributeValue{BOOL: &isCompleted},
+		":t": &dynamodb.AttributeValue{S: &timestamp},
 	}
 }
