@@ -142,8 +142,8 @@ func TestPostItemHandle(t *testing.T) {
 			listID:             "test-list-id",
 			itemName:           "my item",
 			body:               "{ \"Name\": \"my item\" }",
-			mockOutput:         &mockPostItem{res: &data.Item{Name: "ABC", ID: "888"}, err: nil},
-			expectedRes:        &data.Item{Name: "ABC", ID: "888"},
+			mockOutput:         &mockPostItem{res: &data.Item{Name: "ABC", ItemKey: data.ItemKey{ID: "888"}}, err: nil},
+			expectedRes:        &data.Item{Name: "ABC", ItemKey: data.ItemKey{ID: "888"}},
 			expectedStatusCode: 200,
 		},
 		{
@@ -153,7 +153,7 @@ func TestPostItemHandle(t *testing.T) {
 			itemName: "my item",
 			body:     "{ \"Name\": \"my item\" }",
 			mockOutput: &mockPostItem{
-				res: &data.Item{Name: "ABC", ID: "888"},
+				res: &data.Item{Name: "ABC", ItemKey: data.ItemKey{ID: "888"}},
 				err: fmt.Errorf("broken"),
 			},
 			expectedRes:        nil,

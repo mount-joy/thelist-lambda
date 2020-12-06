@@ -12,9 +12,12 @@ func (d *dynamoDB) CreateItem(listID string, name string) (*data.Item, error) {
 	itemID := d.generateID()
 
 	item := &data.Item{
-		ListID: listID,
-		ID:     itemID,
-		Name:   name,
+		ItemKey: data.ItemKey{
+			ListID: listID,
+			ID:     itemID,
+		},
+		Name:        name,
+		IsCompleted: false,
 	}
 	itemToInsert, err := dynamodbattribute.MarshalMap(item)
 	if err != nil {

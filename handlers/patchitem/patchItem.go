@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
-	"github.com/mount-joy/thelist-lambda/data"
 	"github.com/mount-joy/thelist-lambda/db"
 	"github.com/mount-joy/thelist-lambda/handlers/iface"
 )
@@ -41,16 +40,20 @@ func (p *patchItem) Handle(request events.APIGatewayV2HTTPRequest) (interface{},
 		return nil, http.StatusBadRequest
 	}
 
-	newName, err := getName(request.Body)
+	newName, isCompleted, err := getFields(request.Body)
 	if err != nil {
 		log.Printf("Error: %s", err.Error())
 		return nil, http.StatusBadRequest
 	}
 
-	item, err := p.db.UpdateItem(listID, itemID, newName)
+	item, err := p.db.UpdateItem(listID, itemID, newName, isCompleted)
 	if err != nil {
 		if errors.Is(err, db.ErrorNotFound) {
 			return nil, http.StatusNotFound
+		}
+		if errors.Is(err, db.ErrorBadRequest) {
+			log.Printf("Error: %s", err.Error())
+			return nil, http.StatusBadRequest
 		}
 		log.Printf("Error: %s", err.Error())
 		return nil, http.StatusInternalServerError
@@ -59,11 +62,16 @@ func (p *patchItem) Handle(request events.APIGatewayV2HTTPRequest) (interface{},
 	return item, http.StatusOK
 }
 
-func getName(body string) (string, error) {
-	var item data.Item
-	err := json.Unmarshal([]byte(body), &item)
+func getFields(body string) (string, *bool, error) {
+	type Input struct {
+		Name        string `json:"Name"`
+		IsCompleted *bool  `json:"IsCompleted"`
+	}
 
-	return item.Name, err
+	var input Input
+	err := json.Unmarshal([]byte(body), &input)
+
+	return input.Name, input.IsCompleted, err
 }
 
 func getIDs(path string) (string, string, error) {

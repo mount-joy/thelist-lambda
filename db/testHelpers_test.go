@@ -32,6 +32,11 @@ func (m *mockDB) PutItem(input *dynamodb.PutItemInput) (*dynamodb.PutItemOutput,
 	return args.Get(0).(*dynamodb.PutItemOutput), args.Error(1)
 }
 
+func (m *mockDB) UpdateItem(input *dynamodb.UpdateItemInput) (*dynamodb.UpdateItemOutput, error) {
+	args := m.Called(input)
+	return args.Get(0).(*dynamodb.UpdateItemOutput), args.Error(1)
+}
+
 var testConfig config.Config = config.Config{
 	Endpoint: "db://thelist",
 	TableNames: config.TableNames{
@@ -41,5 +46,9 @@ var testConfig config.Config = config.Config{
 }
 
 func stringToPointer(input string) *string {
+	return &input
+}
+
+func boolToPointer(input bool) *bool {
 	return &input
 }

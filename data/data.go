@@ -5,17 +5,28 @@ import (
 	"fmt"
 )
 
+// ListKey represents the primary key of a list
+type ListKey struct {
+	ID string `json:"Id"`
+}
+
 // List represents the data structure of a list
 type List struct {
-	ID   string `json:"Id"`
+	ListKey
 	Name string `json:"Name"`
+}
+
+// ItemKey represents the primary key of an item
+type ItemKey struct {
+	ID     string `json:"Id"`
+	ListID string `json:"ListId"`
 }
 
 // Item represents the data structure of an item on a list
 type Item struct {
-	ID     string `json:"Id"`
-	ListID string `json:"ListId"`
-	Name   string `json:"Name"`
+	ItemKey
+	Name        string `json:"Name"`
+	IsCompleted bool   `json:"IsCompleted"`
 }
 
 // GetNameFieldInJson gets the value of "Name" from the passed in json

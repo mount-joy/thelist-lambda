@@ -10,7 +10,9 @@ import (
 
 func (d *dynamoDB) CreateList(listName string) (*data.List, error) {
 	list := &data.List{
-		ID:   d.generateID(),
+		ListKey: data.ListKey{
+			ID: d.generateID(),
+		},
 		Name: listName,
 	}
 

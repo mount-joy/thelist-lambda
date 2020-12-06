@@ -52,14 +52,18 @@ func TestGetItemsOnList(t *testing.T) {
 			outputErr: nil,
 			expectedRes: &[]data.Item{
 				{
-					Name:   "Oranges",
-					ID:     "1c2fa0a1",
-					ListID: "474c2Fff7",
+					Name: "Oranges",
+					ItemKey: data.ItemKey{
+						ID:     "1c2fa0a1",
+						ListID: "474c2Fff7",
+					},
 				},
 				{
-					Name:   "Apples",
-					ID:     "bb0d5e8e",
-					ListID: "474c2Fff7",
+					Name: "Apples",
+					ItemKey: data.ItemKey{
+						ID:     "bb0d5e8e",
+						ListID: "474c2Fff7",
+					},
 				},
 			},
 			expectedErr: nil,

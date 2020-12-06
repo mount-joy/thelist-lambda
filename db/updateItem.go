@@ -1,6 +1,8 @@
 package db
 
 import (
+	"fmt"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -8,13 +10,8 @@ import (
 	"github.com/mount-joy/thelist-lambda/data"
 )
 
-func (d *dynamoDB) UpdateItem(listID string, itemID string, newName string) (*data.Item, error) {
-	item := &data.Item{
-		ListID: listID,
-		ID:     itemID,
-		Name:   newName,
-	}
-	itemToInsert, err := dynamodbattribute.MarshalMap(item)
+func (d *dynamoDB) UpdateItem(listID string, itemID string, newName string, isCompleted *bool) (*data.Item, error) {
+	key, err := dynamodbattribute.MarshalMap(&data.ItemKey{ID: itemID, ListID: listID})
 	if err != nil {
 		return nil, err
 	}
@@ -24,13 +21,18 @@ func (d *dynamoDB) UpdateItem(listID string, itemID string, newName string) (*da
 		panic("Items table name not set")
 	}
 
-	input := &dynamodb.PutItemInput{
-		Item:                itemToInsert,
-		TableName:           aws.String(tableName),
-		ConditionExpression: aws.String("attribute_exists(Id) AND attribute_exists(ListId)"),
+	fieldsToUpdate, updateExpression, expressionAttributeNames := getUpdateFields(newName, isCompleted)
+	input := &dynamodb.UpdateItemInput{
+		ExpressionAttributeValues: fieldsToUpdate,
+		Key:                       key,
+		TableName:                 aws.String(tableName),
+		UpdateExpression:          updateExpression,
+		ReturnValues:              aws.String("ALL_NEW"),
+		ExpressionAttributeNames:  expressionAttributeNames,
+		ConditionExpression:       aws.String("attribute_exists(Id)"),
 	}
 
-	_, err = d.session.PutItem(input)
+	output, err := d.session.UpdateItem(input)
 
 	switch e := err.(type) {
 	case nil:
@@ -39,8 +41,49 @@ func (d *dynamoDB) UpdateItem(listID string, itemID string, newName string) (*da
 		if e.Code() == dynamodb.ErrCodeConditionalCheckFailedException {
 			return nil, ErrorNotFound
 		}
+		if e.Code() == "ValidationException" { // https://github.com/aws/aws-sdk-go/issues/3140
+			return nil, ErrorBadRequest
+		}
+		return nil, err
 	default:
 		return nil, err
 	}
-	return item, nil
+
+	item := new(data.Item)
+	err = dynamodbattribute.UnmarshalMap(output.Attributes, &item)
+	return item, err
+}
+
+func getUpdateFields(newName string, isCompleted *bool) (map[string]*dynamodb.AttributeValue, *string, map[string]*string) {
+	fields := map[string]*dynamodb.AttributeValue{}
+	var expressionAttributeNames map[string]*string
+	var updateExpression *string
+
+	if isCompleted != nil {
+		fields[":c"] = &dynamodb.AttributeValue{BOOL: isCompleted}
+		updateExpression = appendUpdateExpression(updateExpression, "IsCompleted = :c")
+	}
+
+	if newName != "" {
+		fields[":n"] = &dynamodb.AttributeValue{S: aws.String(newName)}
+		expressionAttributeNames = appendNames(expressionAttributeNames, "#n", "Name")
+		updateExpression = appendUpdateExpression(updateExpression, "#n = :n")
+	}
+
+	return fields, updateExpression, expressionAttributeNames
+}
+
+func appendUpdateExpression(updateExpression *string, newPart string) *string {
+	if updateExpression == nil {
+		return aws.String(fmt.Sprintf("SET %s", newPart))
+	}
+	return aws.String(fmt.Sprintf("%s, %s", *updateExpression, newPart))
+}
+
+func appendNames(names map[string]*string, key string, value string) map[string]*string {
+	if names == nil {
+		names = make(map[string]*string)
+	}
+	names[key] = &value
+	return names
 }

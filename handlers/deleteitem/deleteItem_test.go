@@ -136,7 +136,7 @@ func TestDeleteItemHandle(t *testing.T) {
 			path:               "/lists/test-list-id/items/test-item-id/",
 			listID:             "test-list-id",
 			itemID:             "test-item-id",
-			mockOutput:         &mockDeleteItem{res: &data.Item{Name: "Apples", ID: "888"}, err: nil},
+			mockOutput:         &mockDeleteItem{res: &data.Item{Name: "Apples", ItemKey: data.ItemKey{ID: "888"}}, err: nil},
 			expectedStatusCode: 200,
 		},
 		{

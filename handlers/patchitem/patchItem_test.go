@@ -119,6 +119,7 @@ func TestPatchItemHandle(t *testing.T) {
 		listID             string
 		itemID             string
 		newName            string
+		isCompleted        *bool
 		body               string
 		expectedRes        interface{}
 		expectedStatusCode int
@@ -144,10 +145,47 @@ func TestPatchItemHandle(t *testing.T) {
 			listID:             "test-list-id",
 			itemID:             "test-item-id",
 			newName:            "Apples",
-			body:               "{ \"Name\": \"Apples\" }",
-			mockOutput:         &mockUpdateItem{res: &data.Item{Name: "Apples", ID: "888"}, err: nil},
-			expectedRes:        &data.Item{Name: "Apples", ID: "888"},
+			isCompleted:        testhelpers.BoolToPointer(false),
+			body:               `{ "Name": "Apples", "IsCompleted": false }`,
+			mockOutput:         &mockUpdateItem{res: &data.Item{Name: "Apples", ItemKey: data.ItemKey{ID: "888"}, IsCompleted: false}, err: nil},
+			expectedRes:        &data.Item{Name: "Apples", IsCompleted: false, ItemKey: data.ItemKey{ID: "888"}},
 			expectedStatusCode: 200,
+		},
+		{
+			name:               "Returns 'OK' and item when IsCompleted is omitted",
+			path:               "/lists/test-list-id/items/test-item-id/",
+			listID:             "test-list-id",
+			itemID:             "test-item-id",
+			newName:            "Apples",
+			isCompleted:        nil,
+			body:               `{ "Name": "Apples" }`,
+			mockOutput:         &mockUpdateItem{res: &data.Item{Name: "Apples", ItemKey: data.ItemKey{ID: "888"}, IsCompleted: false}, err: nil},
+			expectedRes:        &data.Item{Name: "Apples", IsCompleted: false, ItemKey: data.ItemKey{ID: "888"}},
+			expectedStatusCode: 200,
+		},
+		{
+			name:               "Returns 'OK' and item when the path matches when Name is omitted",
+			path:               "/lists/test-list-id/items/test-item-id/",
+			listID:             "test-list-id",
+			itemID:             "test-item-id",
+			newName:            "",
+			isCompleted:        testhelpers.BoolToPointer(true),
+			body:               `{ "IsCompleted": true }`,
+			mockOutput:         &mockUpdateItem{res: &data.Item{Name: "Bananas", ItemKey: data.ItemKey{ID: "888"}, IsCompleted: true}, err: nil},
+			expectedRes:        &data.Item{Name: "Bananas", IsCompleted: true, ItemKey: data.ItemKey{ID: "888"}},
+			expectedStatusCode: 200,
+		},
+		{
+			name:               "Returns 'Bad Request' when name is empty",
+			path:               "/lists/test-list-id/items/test-item-id/",
+			listID:             "test-list-id",
+			itemID:             "test-item-id",
+			newName:            "",
+			isCompleted:        nil,
+			body:               `{ "Name": "" }`,
+			mockOutput:         &mockUpdateItem{res: nil, err: db.ErrorBadRequest},
+			expectedRes:        nil,
+			expectedStatusCode: 400,
 		},
 		{
 			name:               "Returns 'Bad Request' when the body is wrong/missing",
@@ -191,7 +229,7 @@ func TestPatchItemHandle(t *testing.T) {
 
 			if tt.mockOutput != nil {
 				dbMocked.
-					On("UpdateItem", tt.listID, tt.itemID, tt.newName).
+					On("UpdateItem", tt.listID, tt.itemID, tt.newName, tt.isCompleted).
 					Return(tt.mockOutput.res, tt.mockOutput.err).
 					Once()
 			}

@@ -24,7 +24,7 @@ func TestCreateList(t *testing.T) {
 			name:           "If dynamodb passes, creates the list",
 			listName:       "my-list",
 			mockOutputErr:  nil,
-			expectedOutput: &data.List{ID: listID, Name: "my-list"},
+			expectedOutput: &data.List{ListKey: data.ListKey{ID: listID}, Name: "my-list"},
 			expectedErr:    nil,
 		},
 		{

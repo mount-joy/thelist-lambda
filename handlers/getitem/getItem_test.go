@@ -139,8 +139,8 @@ func TestGetItemHandle(t *testing.T) {
 			path:               "/lists/test-list-id/items/test-item-id",
 			listID:             "test-list-id",
 			itemID:             "test-item-id",
-			mockOutput:         &mockGetItem{res: &data.Item{Name: "ABC", ID: "888"}, err: nil},
-			expectedRes:        &data.Item{Name: "ABC", ID: "888"},
+			mockOutput:         &mockGetItem{res: &data.Item{Name: "ABC", ItemKey: data.ItemKey{ID: "888"}}, err: nil},
+			expectedRes:        &data.Item{Name: "ABC", ItemKey: data.ItemKey{ID: "888"}},
 			expectedStatusCode: 200,
 		},
 		{
