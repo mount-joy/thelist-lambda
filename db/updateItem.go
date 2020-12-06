@@ -56,7 +56,7 @@ func (d *dynamoDB) UpdateItem(listID string, itemID string, newName string, isCo
 
 func getUpdateFields(newName string, isCompleted *bool) (map[string]*dynamodb.AttributeValue, *string, map[string]*string) {
 	fields := map[string]*dynamodb.AttributeValue{}
-	names := map[string]*string{}
+	var expressionAttributeNames map[string]*string
 	var updateExpression *string
 
 	if isCompleted != nil {
@@ -66,16 +66,11 @@ func getUpdateFields(newName string, isCompleted *bool) (map[string]*dynamodb.At
 
 	if newName != "" {
 		fields[":n"] = &dynamodb.AttributeValue{S: aws.String(newName)}
-		names["#n"] = aws.String("Name")
+		expressionAttributeNames = appendNames(expressionAttributeNames, "#n", "Name")
 		updateExpression = appendUpdateExpression(updateExpression, "#n = :n")
 	}
 
-	// If names isn't used it needs to be nil
-	if len(names) == 0 {
-		names = nil
-	}
-
-	return fields, updateExpression, names
+	return fields, updateExpression, expressionAttributeNames
 }
 
 func appendUpdateExpression(updateExpression *string, newPart string) *string {
@@ -83,4 +78,12 @@ func appendUpdateExpression(updateExpression *string, newPart string) *string {
 		return aws.String(fmt.Sprintf("SET %s", newPart))
 	}
 	return aws.String(fmt.Sprintf("%s, %s", *updateExpression, newPart))
+}
+
+func appendNames(names map[string]*string, key string, value string) map[string]*string {
+	if names == nil {
+		names = make(map[string]*string)
+	}
+	names[key] = &value
+	return names
 }
