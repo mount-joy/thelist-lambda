@@ -11,5 +11,6 @@ type DB interface {
 	DeleteItem(string, string) error
 	GetItem(listID string, itemID string) (*data.Item, error)
 	GetItemsOnList(string) (*[]data.Item, error)
+	GetList(listID string) (*data.List, error)
 	UpdateItem(string, string, string, *bool) (*data.Item, error)
 }
