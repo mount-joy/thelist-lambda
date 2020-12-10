@@ -11,9 +11,10 @@ import (
 )
 
 type dynamoDB struct {
-	session    dynamodbiface.DynamoDBAPI
-	conf       config.Config
-	generateID func() string
+	session      dynamodbiface.DynamoDBAPI
+	conf         config.Config
+	generateID   func() string
+	getTimestamp func() string
 }
 
 func createInstance() DB {
@@ -24,9 +25,10 @@ func createInstance() DB {
 		panic(fmt.Sprintf("Failed to create dynamodb session: %s", err.Error()))
 	}
 	return &dynamoDB{
-		session:    dynamodb.New(session),
-		conf:       conf,
-		generateID: func() string { return generateID() },
+		session:      dynamodb.New(session),
+		conf:         conf,
+		generateID:   func() string { return generateID() },
+		getTimestamp: func() string { return getTimestamp() },
 	}
 }
 

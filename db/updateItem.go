@@ -21,7 +21,8 @@ func (d *dynamoDB) UpdateItem(listID string, itemID string, newName string, isCo
 		panic("Items table name not set")
 	}
 
-	fieldsToUpdate, updateExpression, expressionAttributeNames := getUpdateFields(newName, isCompleted)
+	timestamp := d.getTimestamp()
+	fieldsToUpdate, updateExpression, expressionAttributeNames := getUpdateFields(newName, isCompleted, timestamp)
 	input := &dynamodb.UpdateItemInput{
 		ExpressionAttributeValues: fieldsToUpdate,
 		Key:                       key,
@@ -54,7 +55,7 @@ func (d *dynamoDB) UpdateItem(listID string, itemID string, newName string, isCo
 	return item, err
 }
 
-func getUpdateFields(newName string, isCompleted *bool) (map[string]*dynamodb.AttributeValue, *string, map[string]*string) {
+func getUpdateFields(newName string, isCompleted *bool, timestamp string) (map[string]*dynamodb.AttributeValue, *string, map[string]*string) {
 	fields := map[string]*dynamodb.AttributeValue{}
 	var expressionAttributeNames map[string]*string
 	var updateExpression *string
@@ -69,6 +70,10 @@ func getUpdateFields(newName string, isCompleted *bool) (map[string]*dynamodb.At
 		expressionAttributeNames = appendNames(expressionAttributeNames, "#n", "Name")
 		updateExpression = appendUpdateExpression(updateExpression, "#n = :n")
 	}
+
+	// Updated timestamp
+	fields[":t"] = &dynamodb.AttributeValue{S: &timestamp}
+	updateExpression = appendUpdateExpression(updateExpression, "Updated = :t")
 
 	return fields, updateExpression, expressionAttributeNames
 }

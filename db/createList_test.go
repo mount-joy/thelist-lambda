@@ -13,6 +13,8 @@ import (
 
 func TestCreateList(t *testing.T) {
 	listID := "1234"
+	timestamp := "2020-01-23T09:59:14.9396531Z"
+
 	tests := []struct {
 		name           string
 		listName       string
@@ -24,7 +26,7 @@ func TestCreateList(t *testing.T) {
 			name:           "If dynamodb passes, creates the list",
 			listName:       "my-list",
 			mockOutputErr:  nil,
-			expectedOutput: &data.List{ListKey: data.ListKey{ID: listID}, Name: "my-list"},
+			expectedOutput: &data.List{ListKey: data.ListKey{ID: listID}, Name: "my-list", CreatedTimestamp: timestamp, UpdatedTimestamp: timestamp},
 			expectedErr:    nil,
 		},
 		{
@@ -50,8 +52,10 @@ func TestCreateList(t *testing.T) {
 			defer dbMocked.AssertExpectations(t)
 
 			item := map[string]*dynamodb.AttributeValue{
-				"Id":   {S: &listID},
-				"Name": {S: &tt.listName},
+				"Id":      {S: &listID},
+				"Name":    {S: &tt.listName},
+				"Created": {S: &timestamp},
+				"Updated": {S: &timestamp},
 			}
 			input := dynamodb.PutItemInput{
 				Item:                item,
@@ -64,9 +68,10 @@ func TestCreateList(t *testing.T) {
 				Once()
 
 			d := dynamoDB{
-				session:    dbMocked,
-				conf:       testConfig,
-				generateID: func() string { return listID },
+				session:      dbMocked,
+				conf:         testConfig,
+				generateID:   func() string { return listID },
+				getTimestamp: func() string { return timestamp },
 			}
 
 			gotRes, gotErr := d.CreateList(tt.listName)
