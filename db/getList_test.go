@@ -24,11 +24,12 @@ func TestGetList(t *testing.T) {
 			mockOutputErr: nil,
 			mockOutput: &dynamodb.GetItemOutput{
 				Item: map[string]*dynamodb.AttributeValue{
-					"Id":   {S: &listID},
-					"Name": {S: &name},
+					"Id":       {S: &listID},
+					"Name":     {S: &name},
+					"IsShared": {BOOL: boolToPointer(false)},
 				},
 			},
-			expectedRes: &data.List{ListKey: data.ListKey{ID: listID}, Name: name},
+			expectedRes: &data.List{ListKey: data.ListKey{ID: listID}, Name: name, IsShared: false},
 			expectedErr: nil,
 		},
 		{

@@ -16,6 +16,7 @@ type List struct {
 	Name             string `json:"Name"`
 	CreatedTimestamp string `json:"Created"`
 	UpdatedTimestamp string `json:"Updated"`
+	IsShared         bool   `json:"IsShared"`
 }
 
 // ItemKey represents the primary key of an item

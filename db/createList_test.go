@@ -26,11 +26,11 @@ func TestCreateList(t *testing.T) {
 			name:           "If dynamodb passes, creates the list",
 			listName:       "my-list",
 			mockOutputErr:  nil,
-			expectedOutput: &data.List{ListKey: data.ListKey{ID: listID}, Name: "my-list", CreatedTimestamp: timestamp, UpdatedTimestamp: timestamp},
+			expectedOutput: &data.List{ListKey: data.ListKey{ID: listID}, Name: "my-list", CreatedTimestamp: timestamp, UpdatedTimestamp: timestamp, IsShared: false},
 			expectedErr:    nil,
 		},
 		{
-			name:           "If dynamodb failes, pass back the error",
+			name:           "If dynamodb fails, pass back the error",
 			listName:       "my-list",
 			mockOutputErr:  fmt.Errorf("not working"),
 			expectedOutput: nil,
@@ -52,10 +52,11 @@ func TestCreateList(t *testing.T) {
 			defer dbMocked.AssertExpectations(t)
 
 			item := map[string]*dynamodb.AttributeValue{
-				"Id":      {S: &listID},
-				"Name":    {S: &tt.listName},
-				"Created": {S: &timestamp},
-				"Updated": {S: &timestamp},
+				"Id":       {S: &listID},
+				"Name":     {S: &tt.listName},
+				"Created":  {S: &timestamp},
+				"Updated":  {S: &timestamp},
+				"IsShared": {BOOL: boolToPointer(false)},
 			}
 			input := dynamodb.PutItemInput{
 				Item:                item,

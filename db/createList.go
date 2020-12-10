@@ -18,6 +18,7 @@ func (d *dynamoDB) CreateList(listName string) (*data.List, error) {
 		Name:             listName,
 		CreatedTimestamp: timestamp,
 		UpdatedTimestamp: timestamp,
+		IsShared:         false,
 	}
 
 	listToInsert, err := dynamodbattribute.MarshalMap(list)
