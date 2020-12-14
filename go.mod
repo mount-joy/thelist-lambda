@@ -4,7 +4,7 @@ go 1.15
 
 require (
 	github.com/aws/aws-lambda-go v1.20.0
-	github.com/aws/aws-sdk-go v1.36.5
+	github.com/aws/aws-sdk-go v1.36.7
 	github.com/google/uuid v1.1.2
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/stretchr/objx v0.1.1 // indirect
