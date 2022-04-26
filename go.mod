@@ -3,7 +3,7 @@ module github.com/mount-joy/thelist-lambda
 go 1.15
 
 require (
-	github.com/aws/aws-lambda-go v1.22.0
+	github.com/aws/aws-lambda-go v1.31.1
 	github.com/aws/aws-sdk-go v1.36.19
 	github.com/google/uuid v1.1.3
 	github.com/kr/pretty v0.1.0 // indirect
